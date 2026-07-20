@@ -53,48 +53,56 @@ const SKY_TOP = "#7fb2e6"; // --sky-high-ish
 const SKY_MID = "#9cc6f0";
 const SKY_LOW = "#bfe0f7"; // horizon, paler
 
-/** Build a soft, puffy cloud sprite on its own offscreen canvas. */
-function makeCloudSprite(seed: number, dpr: number): HTMLCanvasElement {
-  const w = 320;
-  const h = 180;
+// The four crisp cloud silhouettes from CloudShape.tsx, on a 200x100 viewBox.
+// Reusing them keeps the canvas sky consistent with the SVG clouds elsewhere,
+// and — crucially — gives every cloud a DEFINED EDGE. Soft radial blobs read as
+// smoke and, having no edge, make drift impossible for the eye to track. A hard
+// silhouette with a gentle top-lit gradient inside reads as a real cloud and
+// its motion is legible.
+const CLOUD_PATHS = [
+  "M30 78 Q10 78 10 60 Q10 44 28 42 Q30 22 54 22 Q70 8 92 20 Q112 10 128 26 Q150 20 160 40 Q186 42 186 60 Q186 78 166 78 Z",
+  "M44 80 Q22 80 22 60 Q22 46 38 44 Q40 22 68 24 Q84 6 108 22 Q134 18 138 42 Q160 46 158 62 Q158 80 138 80 Z",
+  "M52 76 Q34 76 34 60 Q34 48 48 46 Q52 30 74 32 Q90 22 106 34 Q126 34 126 52 Q140 56 138 66 Q136 76 120 76 Z",
+  "M24 74 Q8 74 8 62 Q8 50 24 48 Q28 34 52 36 Q64 26 82 34 Q100 28 116 36 Q140 32 152 46 Q176 46 178 60 Q180 74 160 74 Z",
+];
+
+const SPRITE_VW = 200; // path viewBox width
+const SPRITE_VH = 100; // path viewBox height
+const SPRITE_PAD = 16; // room around the shape for the soft drop shadow
+
+/**
+ * Pre-render one crisp cloud silhouette to an offscreen canvas: a defined shape
+ * filled with a subtle top→bottom white gradient (bright crown, faintly shaded
+ * underside) so it has volume, plus a soft shadow beneath. Blitted each frame.
+ */
+function makeCloudSprite(shape: number, dpr: number): HTMLCanvasElement {
+  const w = SPRITE_VW + SPRITE_PAD * 2;
+  const h = SPRITE_VH + SPRITE_PAD * 2;
   const c = document.createElement("canvas");
   c.width = Math.round(w * dpr);
   c.height = Math.round(h * dpr);
   const ctx = c.getContext("2d")!;
   ctx.scale(dpr, dpr);
+  ctx.translate(SPRITE_PAD, SPRITE_PAD);
 
-  // A cluster of overlapping soft radial blobs = one fluffy cloud.
-  // Vary the cluster deterministically by seed so clouds aren't identical.
-  const rnd = mulberry32(seed * 9973 + 7);
-  const puffs = 6 + Math.floor(rnd() * 4);
-  const cx = w * 0.5;
-  const cy = h * 0.62;
+  const path = new Path2D(CLOUD_PATHS[shape % CLOUD_PATHS.length]);
 
-  for (let i = 0; i < puffs; i++) {
-    const angle = (i / puffs) * Math.PI * 2 + rnd() * 0.6;
-    const dist = (0.18 + rnd() * 0.32) * w * 0.5;
-    const px = cx + Math.cos(angle) * dist;
-    const py = cy + Math.sin(angle) * dist * 0.5;
-    const r = (0.22 + rnd() * 0.26) * w * 0.5;
+  // soft shadow under the cloud for a touch of depth
+  ctx.save();
+  ctx.shadowColor = "rgba(70, 110, 160, 0.28)";
+  ctx.shadowBlur = 14;
+  ctx.shadowOffsetY = 7;
+  ctx.fillStyle = "#ffffff";
+  ctx.fill(path);
+  ctx.restore();
 
-    const g = ctx.createRadialGradient(px, py, r * 0.1, px, py, r);
-    g.addColorStop(0, "rgba(255,255,255,0.95)");
-    g.addColorStop(0.6, "rgba(255,255,255,0.7)");
-    g.addColorStop(1, "rgba(255,255,255,0)");
-    ctx.fillStyle = g;
-    ctx.beginPath();
-    ctx.arc(px, py, r, 0, Math.PI * 2);
-    ctx.fill();
-  }
-
-  // a soft flat-ish base so the bottom reads as a cloud, not a fuzzy ball
-  const base = ctx.createRadialGradient(cx, cy + h * 0.12, 10, cx, cy + h * 0.12, w * 0.42);
-  base.addColorStop(0, "rgba(255,255,255,0.9)");
-  base.addColorStop(1, "rgba(255,255,255,0)");
-  ctx.fillStyle = base;
-  ctx.beginPath();
-  ctx.ellipse(cx, cy + h * 0.14, w * 0.42, h * 0.2, 0, 0, Math.PI * 2);
-  ctx.fill();
+  // top-lit gradient fill inside the crisp silhouette → gives the cloud volume
+  const g = ctx.createLinearGradient(0, 6, 0, SPRITE_VH);
+  g.addColorStop(0, "#ffffff");
+  g.addColorStop(0.55, "#f4f9ff");
+  g.addColorStop(1, "#d9e8f7");
+  ctx.fillStyle = g;
+  ctx.fill(path);
 
   return c;
 }
@@ -134,7 +142,7 @@ export default function SkyCanvas() {
     // Build the cloud field. More/bigger clouds in nearer bands.
     const clouds: Cloud[] = [];
     const rnd = mulberry32(42);
-    const perBand = [7, 6, 5];
+    const perBand = [6, 5, 4];
     BANDS.forEach((b, band) => {
       for (let i = 0; i < perBand[band]; i++) {
         const dir = rnd() > 0.5 ? 1 : -1;
@@ -142,11 +150,13 @@ export default function SkyCanvas() {
           band,
           x: rnd(),
           y: 0.05 + rnd() * 0.9,
-          scale: (0.5 + rnd() * 0.5) * (0.7 + band * 0.35),
-          opacity: (0.35 + rnd() * 0.25) * (0.7 + band * 0.28),
-          speed: dir * (0.008 + rnd() * 0.02) * b.drift,
-          bobAmp: 6 + rnd() * 14 + band * 6,
-          bobSpeed: (0.12 + rnd() * 0.16),
+          // bigger clouds overall so the silhouette reads clearly
+          scale: (0.85 + rnd() * 0.6) * (0.8 + band * 0.4),
+          opacity: (0.55 + rnd() * 0.3) * (0.7 + band * 0.3),
+          // ~4-8x faster than before so the drift is actually legible
+          speed: dir * (0.035 + rnd() * 0.05) * b.drift,
+          bobAmp: 5 + rnd() * 10 + band * 5,
+          bobSpeed: 0.12 + rnd() * 0.16,
           bobPhase: rnd() * Math.PI * 2,
           sprite: Math.floor(rnd() * sprites.length),
         });
@@ -175,8 +185,8 @@ export default function SkyCanvas() {
 
     let raf = 0;
     let last = performance.now();
-    const SPRITE_W = 320;
-    const SPRITE_H = 180;
+    const SPRITE_W = SPRITE_VW + SPRITE_PAD * 2;
+    const SPRITE_H = SPRITE_VH + SPRITE_PAD * 2;
 
     const frame = (now: number) => {
       const dt = Math.min((now - last) / 1000, 0.05); // clamp for tab-switches
