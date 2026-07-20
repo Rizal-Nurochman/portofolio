@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import Sky from "@/components/sky/Sky";
+import SkyCanvas from "@/components/sky/SkyCanvas";
 import Nav from "@/components/ui/Nav";
 import Footer from "@/components/ui/Footer";
 import Reveal from "@/components/ui/Reveal";
@@ -21,7 +21,7 @@ export const metadata: Metadata = {
 export default function ArticlesPage() {
   return (
     <>
-      <Sky />
+      <SkyCanvas />
       <Nav />
       <main id="main" className={styles.wrap}>
         <Reveal className={styles.card} y={16}>

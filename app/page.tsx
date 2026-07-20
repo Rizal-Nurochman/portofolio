@@ -1,5 +1,5 @@
 import Link from "next/link";
-import Sky from "@/components/sky/Sky";
+import SkyCanvas from "@/components/sky/SkyCanvas";
 import GopherCompanion from "@/components/gopher/GopherCompanion";
 import Nav from "@/components/ui/Nav";
 import Footer from "@/components/ui/Footer";
@@ -18,7 +18,7 @@ import styles from "./page.module.css";
 export default function HomePage() {
   return (
     <>
-      <Sky />
+      <SkyCanvas />
       <GopherCompanion />
       <Nav />
 

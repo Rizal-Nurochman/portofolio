@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import Sky from "@/components/sky/Sky";
+import SkyCanvas from "@/components/sky/SkyCanvas";
 import Nav from "@/components/ui/Nav";
 import Footer from "@/components/ui/Footer";
 import Reveal from "@/components/ui/Reveal";
@@ -42,7 +42,7 @@ const CHANNELS = [
 export default function ContactPage() {
   return (
     <>
-      <Sky />
+      <SkyCanvas />
       <Nav />
       <main id="main" className={styles.wrap}>
         <Reveal className={styles.inner} y={16}>
