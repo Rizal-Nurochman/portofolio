@@ -7,19 +7,20 @@
 }
 
 /*
- * The daytime gradient. Taller than the viewport so the top (thinner, higher
- * air — paler, cooler) is revealed as the page climbs. Sits still; the clouds
- * carry the parallax.
+ * The daytime gradient. Sits behind everything; a gentle scroll-driven shift
+ * (see Sky.tsx) makes the air read as thinner/higher as you climb, without
+ * moving the clouds off screen.
  */
 .gradient {
   position: absolute;
-  inset: 0;
+  inset: -10% 0;
   background: linear-gradient(
     180deg,
     var(--sky-high) 0%,
     var(--sky) 45%,
     var(--sky-low) 100%
   );
+  will-change: transform;
 }
 
 .layer {
@@ -28,23 +29,47 @@
   will-change: transform;
 }
 
+/*
+ * Each cloud floats continuously and visibly. Horizontal drift lives on
+ * `transform` (translateX); the gentle vertical bob lives on the separate
+ * `translate` property, so the two compose instead of overwriting each other.
+ * Amplitude and timing are set per-cloud via custom properties in Sky.tsx, and
+ * negative delays spread them out so they don't sway in unison.
+ */
 .cloud {
   position: absolute;
-  animation: drift 22s ease-in-out infinite alternate;
+  animation:
+    driftX var(--drift-dur, 52s) var(--drift-delay, 0s) ease-in-out infinite alternate,
+    bobY var(--bob-dur, 7s) var(--bob-delay, 0s) ease-in-out infinite alternate;
+  will-change: transform, translate;
 }
 
-/* Barely-there horizontal breathing so a still page still feels alive. */
-@keyframes drift {
+@keyframes driftX {
   from {
-    transform: translateX(-14px);
+    transform: translateX(var(--drift-from, -6vw));
   }
   to {
-    transform: translateX(14px);
+    transform: translateX(var(--drift-to, 6vw));
   }
 }
 
+@keyframes bobY {
+  from {
+    translate: 0 calc(var(--bob, 12px) * -1);
+  }
+  to {
+    translate: 0 var(--bob, 12px);
+  }
+}
+
+/*
+ * Reduced motion: clouds hold at a calm mid position. They stay spread across
+ * the sky (their `top`/`left` base positions), just no drift or bob.
+ */
 @media (prefers-reduced-motion: reduce) {
   .cloud {
     animation: none;
+    transform: none;
+    translate: none;
   }
 }

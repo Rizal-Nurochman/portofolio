@@ -6,15 +6,19 @@ import { usePrefersReducedMotion } from "@/lib/useReducedMotion";
 import styles from "./GopherCompanion.module.css";
 
 /**
- * The Gopher that climbs the sky as you scroll. It's pinned to the viewport
- * and travels from near the bottom (page top) toward the upper-middle (page
- * bottom), so scrolling down reads as the Gopher hopping UP through the clouds.
- * When the scroll direction/velocity spikes it plays a brief jump pose.
+ * The Gopher that climbs the sky as you scroll. It's pinned to the viewport and
+ * travels from low (page top) toward the upper-middle (page bottom), so
+ * scrolling down reads as hopping UP through the clouds. Two things move it:
  *
- * All movement is transform/opacity, batched in a single rAF. Under
- * reduced-motion it parks in one spot with no hopping and no scroll listener.
- * Decorative throughout (aria-hidden), sized down and nudged aside on small
- * screens so it never covers content or controls.
+ *  1. A continuous, self-driven hop (CSS animation) so it's visibly alive and
+ *     bouncing even when you're not touching the scroll wheel.
+ *  2. Scroll progress, which sets its vertical travel (the climb) and flips it
+ *     to face the direction of travel. Fast scrolling briefly boosts the hop.
+ *
+ * All movement is transform/translate, batched in one rAF. Under reduced-motion
+ * it parks calmly with no hop and no scroll listener. Decorative throughout
+ * (aria-hidden), scaled down and nudged aside on phones so it never covers
+ * content or controls.
  */
 export default function GopherCompanion() {
   const wrapRef = useRef<HTMLDivElement>(null);
@@ -25,36 +29,32 @@ export default function GopherCompanion() {
     if (!el) return;
 
     if (prefersReduced) {
-      // park it in a calm resting spot, upright, no hop
       el.style.setProperty("--climb", "0.5");
-      el.style.setProperty("--hop", "0");
       return;
     }
 
     let raf = 0;
     let lastY = window.scrollY;
-    let hop = 0; // 0..1 how mid-jump we are
-    let velocity = 0;
+    let boost = 0; // extra hop energy from fast scrolling, decays over time
 
     const update = () => {
       raf = 0;
       const y = window.scrollY;
       const max = document.documentElement.scrollHeight - window.innerHeight;
-      const progress = max > 0 ? y / max : 0;
+      const progress = max > 0 ? Math.min(Math.max(y / max, 0), 1) : 0;
 
-      velocity = y - lastY;
+      const velocity = y - lastY;
       lastY = y;
 
-      // scroll movement feeds the hop; it decays each frame when idle
-      const targetHop = Math.min(Math.abs(velocity) / 40, 1);
-      hop = Math.max(hop * 0.88, targetHop);
+      boost = Math.max(boost * 0.9, Math.min(Math.abs(velocity) / 60, 1));
 
       el.style.setProperty("--climb", (1 - progress).toFixed(4));
-      el.style.setProperty("--hop", hop.toFixed(3));
-      // face the direction of travel: down-scroll (climbing) faces right
-      el.style.setProperty("--facing", velocity >= 0 ? "1" : "-1");
+      el.style.setProperty("--boost", boost.toFixed(3));
+      if (velocity !== 0) {
+        el.style.setProperty("--facing", velocity > 0 ? "1" : "-1");
+      }
 
-      if (hop > 0.01) raf = requestAnimationFrame(update);
+      if (boost > 0.01) raf = requestAnimationFrame(update);
     };
 
     const onScroll = () => {
@@ -73,8 +73,10 @@ export default function GopherCompanion() {
 
   return (
     <div ref={wrapRef} className={styles.companion} aria-hidden="true">
-      <div className={styles.hopper}>
-        <GopherSVG width={150} className={styles.gopher} />
+      <div className={styles.facing}>
+        <div className={styles.hopper}>
+          <GopherSVG width={150} className={styles.gopher} />
+        </div>
       </div>
     </div>
   );

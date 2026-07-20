@@ -1,65 +1,85 @@
 /*
- * The companion is fixed to the right edge of the viewport. --climb (1 at page
- * top, 0 at bottom) drives vertical travel; --hop (0..1) lifts and squashes the
- * inner hopper for the jump; --facing flips horizontal orientation to match
- * scroll direction. Only transforms animate.
+ * Three nested transforms, one job each so they never fight:
+ *   .companion — fixed to the viewport edge; --climb (1 at page top → 0 at
+ *                bottom) drives vertical travel up the sky.
+ *   .facing    — flips horizontally (--facing) to match scroll direction.
+ *   .hopper    — the continuous self-driven hop, always running so the Gopher
+ *                is visibly bouncing even when idle; --boost adds extra lift
+ *                when the user scrolls fast.
  */
 .companion {
   position: fixed;
   right: clamp(1rem, 5vw, 5rem);
-  /* travel band: from 72vh (low, page top) up to 22vh (high, page bottom) */
-  top: calc(22vh + var(--climb, 0.5) * 50vh);
+  /* travel band: 70vh (low, page top) up to 20vh (high, page bottom) */
+  top: calc(20vh + var(--climb, 0.5) * 50vh);
   z-index: var(--z-gopher);
   pointer-events: none;
-  transform: translateZ(0);
-  transition: top 0.15s ease-out;
+  transition: top 0.35s var(--ease-out-quart);
   --facing: 1;
+  --boost: 0;
 }
 
-/* The hop: lift up and briefly squash-stretch, scaled by --hop. */
+.facing {
+  transform: scaleX(var(--facing));
+  transition: transform 0.2s var(--ease-out-quart);
+}
+
+/*
+ * The hop. A clear up-and-down bounce with squash at the bottom and stretch at
+ * the peak — the classic jump feel. Runs continuously; --boost scales the peak
+ * height so fast scrolling makes it leap higher.
+ */
 .hopper {
-  transform:
-    scaleX(var(--facing))
-    translateY(calc(var(--hop, 0) * -34px))
-    scaleY(calc(1 + var(--hop, 0) * 0.08))
-    scaleX(calc(1 - var(--hop, 0) * 0.06));
   transform-origin: bottom center;
+  animation: hop 1.15s var(--ease-out-quart) infinite;
   will-change: transform;
+}
+
+@keyframes hop {
+  0% {
+    transform: translateY(0) scaleY(0.92) scaleX(1.05);
+  }
+  25% {
+    transform: translateY(calc(-38px - var(--boost, 0) * 34px)) scaleY(1.06)
+      scaleX(0.96);
+  }
+  50% {
+    transform: translateY(0) scaleY(0.9) scaleX(1.08);
+  }
+  55% {
+    transform: translateY(0) scaleY(0.96) scaleX(1.02);
+  }
+  100% {
+    transform: translateY(0) scaleY(0.92) scaleX(1.05);
+  }
 }
 
 .gopher {
   display: block;
-  filter: drop-shadow(0 10px 18px oklch(0.45 0.09 250 / 0.28));
-}
-
-/* A soft idle bob so a still Gopher still breathes. */
-@media (prefers-reduced-motion: no-preference) {
-  .hopper {
-    animation: bob 3.2s ease-in-out infinite alternate;
-  }
-  @keyframes bob {
-    from {
-      translate: 0 0;
-    }
-    to {
-      translate: 0 -6px;
-    }
-  }
+  filter: drop-shadow(0 12px 16px oklch(0.45 0.09 250 / 0.3));
 }
 
 /* Smaller and tucked closer to the edge on phones so it never blocks content. */
 @media (max-width: 640px) {
   .companion {
-    right: 0.5rem;
-    top: calc(30vh + var(--climb, 0.5) * 44vh);
+    right: 0.35rem;
+    top: calc(28vh + var(--climb, 0.5) * 46vh);
   }
   .gopher {
-    width: 84px;
+    width: 86px;
   }
 }
 
+/* Reduced motion: no hop, no flip transition — a calm resting Gopher. */
 @media (prefers-reduced-motion: reduce) {
   .companion {
     transition: none;
+  }
+  .facing {
+    transition: none;
+  }
+  .hopper {
+    animation: none;
+    transform: none;
   }
 }
