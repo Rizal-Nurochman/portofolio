@@ -116,6 +116,18 @@ code,
   padding-block: var(--s-3xl);
 }
 
+/*
+ * The sky canvas is position:fixed and paints an opaque gradient, so a
+ * positioned element at z-index 0 would cover ordinary static content. Every
+ * route's <main> must therefore establish its own stacking context above the
+ * clouds. The home page sets this on its own wrapper; this guarantees it for
+ * the shell routes (about/projects/articles/contact) too.
+ */
+main {
+  position: relative;
+  z-index: var(--z-content);
+}
+
 /* ============================================================
    Focus — visible for keyboard users, AA-contrast ring
    ============================================================ */
