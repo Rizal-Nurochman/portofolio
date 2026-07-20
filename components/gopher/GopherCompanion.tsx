@@ -40,9 +40,10 @@ export default function GopherCompanion() {
     let lastScrollY = window.scrollY;
     let boost = 0;
     let facing = 1;
-    // travel band as a fraction of viewport height: low at page top, high at bottom
-    const LOW = 0.68;
-    const HIGH = 0.2;
+    // travel band as a fraction of viewport height. You DESCEND as you scroll:
+    // high in the sky at the top of the page, down near the ground at the bottom.
+    const HIGH = 0.22; // near top of viewport, page start
+    const LOW = 0.66; // down near the landing ground, page end
 
     // blink scheduling: eyes stay open, then a quick ~140ms squeeze at intervals
     let nextBlink = 1.5 + Math.random() * 3;
@@ -62,8 +63,8 @@ export default function GopherCompanion() {
       if (Math.abs(velocity) > 0.5) facing = velocity > 0 ? 1 : -1;
       boost = Math.max(boost * 0.92, Math.min(Math.abs(velocity) / 50, 1));
 
-      // vertical climb position (px from top of viewport)
-      const bandTop = (LOW + (HIGH - LOW) * progress) * window.innerHeight;
+      // vertical position (px from top of viewport): starts high, descends to ground
+      const bandTop = (HIGH + (LOW - HIGH) * progress) * window.innerHeight;
 
       // The hop always runs — this is the ambient life the mascot needs. It's
       // decorative, gentle, and non-vestibular, so we keep it under

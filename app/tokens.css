@@ -98,4 +98,5 @@
   --z-modal: 60;
   --z-toast: 70;
   --z-tooltip: 80;
+  --z-intro: 100; /* first-visit cloud curtain — above everything */
 }

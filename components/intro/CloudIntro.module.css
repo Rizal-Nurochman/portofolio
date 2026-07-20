@@ -1,0 +1,79 @@
+/*
+ * Full-screen intro curtain. Two cloud banks meet at the center seam and cover
+ * the viewport; adding .parting slides them apart to reveal the site. It sits
+ * above everything (its own top-of-scale z-index) and is removed from the DOM
+ * once done.
+ *
+ * The slide uses a transform transition (not a CSS @keyframes animation), so it
+ * is NOT killed by the global prefers-reduced-motion freeze. The component
+ * itself shortens the timings under reduce-motion instead.
+ */
+.overlay {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-intro);
+  overflow: hidden;
+  background: linear-gradient(180deg, var(--sky-high), var(--sky) 60%, var(--sky-low));
+}
+
+.bank {
+  position: absolute;
+  top: 0;
+  width: 52%; /* slight overlap at the seam so no gap shows */
+  height: 100%;
+  transition: transform 1.1s var(--ease-out-expo);
+  will-change: transform;
+}
+.left {
+  left: 0;
+  transform: translateX(0);
+}
+.right {
+  right: 0;
+  transform: translateX(0);
+}
+
+/* Part: each bank slides fully off its own edge. */
+.parting .left {
+  transform: translateX(-102%);
+}
+.parting .right {
+  transform: translateX(102%);
+}
+
+.bankSvg {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+/* Center counter */
+.center {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.15em;
+  color: var(--ink-sky);
+  transition: opacity 0.5s var(--ease-out-quart);
+}
+.parting .center {
+  opacity: 0;
+}
+
+.count {
+  font-family: var(--font-display);
+  font-size: clamp(3.5rem, 14vw, 9rem);
+  font-weight: 500;
+  line-height: 1;
+  letter-spacing: -0.03em;
+  font-variant-numeric: tabular-nums;
+}
+.pct {
+  font-family: var(--font-mono);
+  font-size: clamp(1rem, 3vw, 1.75rem);
+  color: var(--azure-deep);
+  align-self: flex-start;
+  margin-top: 0.6em;
+}

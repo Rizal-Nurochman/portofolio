@@ -183,11 +183,9 @@ export default function SkyCanvas() {
     resize();
 
     let scrollProgress = 0;
-    let scrollY = 0;
     const onScroll = () => {
       const max = document.documentElement.scrollHeight - window.innerHeight;
-      scrollY = window.scrollY;
-      scrollProgress = max > 0 ? Math.min(Math.max(scrollY / max, 0), 1) : 0;
+      scrollProgress = max > 0 ? Math.min(Math.max(window.scrollY / max, 0), 1) : 0;
     };
     onScroll();
 
@@ -230,13 +228,15 @@ export default function SkyCanvas() {
       }
       ctx.globalAlpha = 1;
 
-      // Ground: the journey starts on grassy earth at the foot of the first
-      // screen, then the ground falls away below as you climb into open sky.
-      // Anchored to scrollY (1:1) so it reads as real terrain you leave behind:
-      // scrolling down = climbing up, so the ground moves DOWN off the bottom.
-      const groundTop = height - GROUND_H + scrollY;
-      if (groundTop < height) {
-        // grassy band, extended well past the bottom so no gap shows
+      // Ground: you begin high in open sky and DESCEND as you scroll down, so
+      // the grassy earth rises up from below to meet you. At the top of the page
+      // it sits just off the bottom edge (hidden); by the bottom of the page the
+      // full terrain rests at the foot of the screen — you've landed.
+      // Tied to scrollProgress so the last stretch of the page is the touchdown.
+      const groundReveal = Math.max(scrollProgress - 0.55, 0) / 0.45; // 0 until 55%, →1 at end
+      const groundTop = height - GROUND_H * groundReveal;
+      if (groundReveal > 0) {
+        // grassy band, extended past the bottom so no gap shows
         const gg = ctx.createLinearGradient(0, groundTop, 0, groundTop + GROUND_H);
         gg.addColorStop(0, GRASS_TOP);
         gg.addColorStop(0.16, GRASS);

@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Fraunces, Instrument_Sans, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
+import CloudIntro from "@/components/intro/CloudIntro";
 
 const fraunces = Fraunces({
   subsets: ["latin"],
@@ -48,7 +49,10 @@ export default function RootLayout({
           }}
         />
       </head>
-      <body>{children}</body>
+      <body>
+        <CloudIntro />
+        {children}
+      </body>
     </html>
   );
 }
