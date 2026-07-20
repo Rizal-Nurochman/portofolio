@@ -1,0 +1,61 @@
+/*
+ * Shared layout for the not-yet-fully-built inner routes. Home is the finished
+ * surface for this pass; these give each nav destination a real, on-brand
+ * landing (cloud card, altitude label) instead of a 404, ready to flesh out.
+ */
+.wrap {
+  max-width: var(--page-max);
+  margin-inline: auto;
+  width: 100%;
+  padding: clamp(7rem, 16vh, 11rem) var(--page-x) var(--s-3xl);
+  min-height: 80svh;
+  display: flex;
+  align-items: center;
+}
+
+.card {
+  background: var(--cloud);
+  border: 1px solid var(--cloud-edge);
+  border-radius: var(--r-lg);
+  padding: clamp(var(--s-lg), 6vw, var(--s-2xl));
+  box-shadow: var(--shadow-float);
+  max-width: 44rem;
+}
+
+.altitude {
+  font-family: var(--font-mono);
+  font-size: var(--t-label);
+  color: var(--azure-deep);
+  margin-bottom: var(--s-md);
+}
+
+.title {
+  font-family: var(--font-display);
+  font-size: var(--t-h1);
+  font-weight: 500;
+  line-height: 1.05;
+  letter-spacing: -0.02em;
+  color: var(--ink-sky);
+  text-wrap: balance;
+}
+
+.text {
+  margin-top: var(--s-md);
+  font-size: 1.125rem;
+  line-height: 1.6;
+  color: var(--ink);
+  max-width: 58ch;
+  text-wrap: pretty;
+}
+
+.link {
+  display: inline-block;
+  margin-top: var(--s-lg);
+  font-weight: 600;
+  color: var(--azure-deep);
+  border-bottom: 2px solid transparent;
+  transition: border-color var(--dur-fast) var(--ease-out-quart);
+}
+.link:hover {
+  border-bottom-color: var(--azure-deep);
+}

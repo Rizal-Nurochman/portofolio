@@ -1,0 +1,22 @@
+.reveal {
+  opacity: 1;
+  transition: opacity var(--dur-slow) var(--ease-out-expo),
+    transform var(--dur-slow) var(--ease-out-expo);
+  transition-delay: var(--reveal-delay, 0ms);
+}
+
+/*
+ * Only apply the hidden-start state when JS is present to remove it. The
+ * .reveal base stays visible so no-JS / headless renders never ship blank.
+ */
+:global(.js) .reveal:not(.shown) {
+  opacity: 0;
+  transform: translateY(var(--reveal-y, 24px));
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .reveal {
+    transition: opacity var(--dur-mid) linear;
+    transform: none !important;
+  }
+}

@@ -1,0 +1,127 @@
+.wrap {
+  max-width: 60rem;
+  margin-inline: auto;
+  width: 100%;
+  padding: clamp(7rem, 16vh, 10rem) var(--page-x) var(--s-3xl);
+}
+
+.intro {
+  max-width: 46rem;
+}
+.altitude {
+  font-family: var(--font-mono);
+  font-size: var(--t-label);
+  color: var(--azure-deep);
+  margin-bottom: var(--s-md);
+}
+.title {
+  font-family: var(--font-display);
+  font-size: var(--t-display);
+  font-weight: 500;
+  line-height: 1;
+  letter-spacing: -0.03em;
+  color: var(--ink-sky);
+  text-wrap: balance;
+}
+.lead {
+  margin-top: var(--s-md);
+  font-size: 1.25rem;
+  line-height: 1.6;
+  color: var(--ink);
+  max-width: 60ch;
+  text-wrap: pretty;
+}
+
+.h2 {
+  font-family: var(--font-display);
+  font-size: var(--t-h2);
+  color: var(--ink-sky);
+}
+
+.stackSection {
+  margin-block: var(--s-2xl);
+}
+.tools {
+  list-style: none;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s-xs);
+  margin-top: var(--s-md);
+}
+.tool {
+  font-family: var(--font-mono);
+  font-size: var(--t-sm);
+  color: var(--azure-deep);
+  background: var(--cloud);
+  border: 1px solid var(--cloud-edge);
+  border-radius: var(--r-full);
+  padding: 0.45rem 0.9rem;
+  box-shadow: var(--shadow-rest);
+}
+
+/* Upward timeline: a vertical line with nodes. Education vs organisation are
+   distinguished by dot colour (azure vs gold), keyed in the legend-free labels. */
+.timeline {
+  list-style: none;
+  margin-top: var(--s-lg);
+  position: relative;
+  padding-left: var(--s-lg);
+}
+.timeline::before {
+  content: "";
+  position: absolute;
+  left: 7px;
+  top: 0.5rem;
+  bottom: 0.5rem;
+  width: 2px;
+  background: linear-gradient(var(--sky-high), var(--cloud-edge));
+}
+.node {
+  position: relative;
+  padding-bottom: var(--s-xl);
+}
+.node:last-child {
+  padding-bottom: 0;
+}
+.nodeInner {
+  position: relative;
+}
+.dot {
+  position: absolute;
+  left: calc(-1 * var(--s-lg));
+  top: 0.35rem;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  border: 3px solid var(--cloud);
+  box-shadow: var(--shadow-rest);
+}
+.dot.education {
+  background: var(--azure);
+}
+.dot.organisation {
+  background: var(--gold);
+}
+.when {
+  font-family: var(--font-mono);
+  font-size: var(--t-label);
+  color: var(--muted);
+}
+.nodeTitle {
+  font-family: var(--font-display);
+  font-size: var(--t-h3);
+  color: var(--ink-sky);
+  margin-top: 0.15rem;
+}
+.place {
+  color: var(--azure-deep);
+  font-weight: 600;
+  margin-top: 0.1rem;
+}
+.detail {
+  margin-top: var(--s-xs);
+  color: var(--ink);
+  line-height: 1.6;
+  max-width: 56ch;
+  text-wrap: pretty;
+}

@@ -1,0 +1,58 @@
+.wrap {
+  max-width: var(--page-max);
+  margin-inline: auto;
+  width: 100%;
+  padding: clamp(7rem, 16vh, 10rem) var(--page-x) var(--s-3xl);
+}
+
+.head {
+  max-width: 44rem;
+  margin-bottom: var(--s-xl);
+}
+
+.altitude {
+  font-family: var(--font-mono);
+  font-size: var(--t-label);
+  color: var(--azure-deep);
+  margin-bottom: var(--s-md);
+}
+
+.title {
+  font-family: var(--font-display);
+  font-size: var(--t-display);
+  font-weight: 500;
+  line-height: 1;
+  letter-spacing: -0.03em;
+  color: var(--ink-sky);
+  text-wrap: balance;
+}
+
+.lede {
+  margin-top: var(--s-md);
+  font-size: 1.125rem;
+  line-height: 1.55;
+  color: var(--ink);
+  max-width: 52ch;
+  text-wrap: pretty;
+}
+
+.grid {
+  list-style: none;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: var(--s-lg);
+}
+
+.foot {
+  margin-top: var(--s-2xl);
+}
+
+.link {
+  font-weight: 600;
+  color: var(--azure-deep);
+  border-bottom: 2px solid transparent;
+  transition: border-color var(--dur-fast) var(--ease-out-quart);
+}
+.link:hover {
+  border-bottom-color: var(--azure-deep);
+}

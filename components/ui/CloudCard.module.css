@@ -1,0 +1,28 @@
+.card {
+  background: var(--cloud);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-float);
+  /* a hairline of the sky's own hue rather than gray, so edges read soft */
+  border: 1px solid oklch(0.93 0.02 240);
+}
+
+.interactive {
+  transition:
+    transform 0.4s var(--ease-out-quart),
+    box-shadow 0.4s var(--ease-out-quart);
+  will-change: transform;
+}
+
+.interactive:hover {
+  transform: translateY(-6px);
+  box-shadow: var(--shadow-lift);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .interactive {
+    transition: box-shadow 0.2s ease;
+  }
+  .interactive:hover {
+    transform: none;
+  }
+}

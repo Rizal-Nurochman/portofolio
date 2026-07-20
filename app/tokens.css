@@ -1,0 +1,101 @@
+/* ============================================================
+   Design tokens — "Perjalanan Awan" portfolio
+   Anchored on daytime sky blue with warm sun-gold accent.
+   All colors in OKLCH. Source of truth: DESIGN.md
+   ============================================================ */
+
+:root {
+  /* --- Sky (background system, layered by altitude) --- */
+  --sky-low: oklch(0.86 0.07 235); /* horizon / lower sky — Home */
+  --sky: oklch(0.80 0.10 240); /* mid daytime sky */
+  --sky-high: oklch(0.72 0.13 245); /* upper sky — Contact / peaks */
+  --sky-deep: oklch(0.62 0.14 248); /* deepest blue, rare accents */
+
+  /* --- Clouds (content surfaces) --- */
+  --cloud: oklch(1 0 0); /* pure white cloud card */
+  --cloud-soft: oklch(0.98 0.006 240); /* faint blue-tinted panel */
+  --cloud-edge: oklch(0.93 0.012 240); /* hairline borders */
+
+  /* --- Brand action --- */
+  --azure: oklch(0.58 0.16 248); /* primary action, links */
+  --azure-deep: oklch(0.48 0.15 250); /* hover / pressed */
+
+  /* --- Warm accent (sun) --- */
+  --gold: oklch(0.83 0.15 82); /* sun-gold: badges, Gopher scarf */
+  --gold-deep: oklch(0.72 0.14 68); /* darker gold for text-on-light */
+
+  /* --- Gopher mascot palette --- */
+  --gopher-body: oklch(0.82 0.08 225); /* light sky-blue body */
+  --gopher-belly: oklch(0.95 0.02 225); /* pale belly patch */
+  --gopher-limb: oklch(0.75 0.09 225); /* arms/feet, a touch deeper */
+  --gopher-outline: oklch(0.28 0.06 250); /* dark navy outline — keeps it readable on sky */
+  --gopher-scarf: oklch(0.83 0.15 82); /* gold scarf = the sun accent */
+  --gopher-scarf-deep: oklch(0.72 0.14 68); /* scarf tail, deeper gold */
+
+  /* --- Ink (text) --- */
+  --ink: oklch(0.24 0.03 250); /* body text — deep navy, ≥7:1 on cloud */
+  --ink-sky: oklch(0.22 0.04 250); /* headings on light sky */
+  --muted: oklch(0.46 0.03 250); /* secondary text, ≥4.5:1 on cloud */
+  --on-azure: oklch(0.99 0.01 240); /* text on azure fill */
+  --on-gold: oklch(0.26 0.04 70); /* dark ink on gold fill */
+
+  /* --- Radius --- */
+  --r-sm: 8px;
+  --r-md: 16px;
+  --r-lg: 28px;
+  --r-full: 999px;
+
+  /* --- Page frame --- */
+  --page-max: 1120px;
+  --page-x: clamp(1.25rem, 5vw, 3rem);
+
+  /* --- Spacing scale --- */
+  --s-2xs: 4px;
+  --s-xs: 8px;
+  --s-sm: 16px;
+  --s-md: 24px;
+  --s-lg: 40px;
+  --s-xl: 72px;
+  --s-2xl: 112px;
+  --s-3xl: 160px;
+
+  /* --- Type families --- */
+  --font-display: var(--font-fraunces), Georgia, "Times New Roman", serif;
+  --font-body: var(--font-instrument), system-ui, -apple-system, sans-serif;
+  --font-mono: var(--font-jetbrains), ui-monospace, "SF Mono", Menlo, monospace;
+
+  /* --- Fluid type scale --- */
+  --t-display: clamp(2.75rem, 1.6rem + 5.6vw, 5.25rem);
+  --t-h1: clamp(2.1rem, 1.4rem + 3.4vw, 3.5rem);
+  --t-h2: clamp(1.6rem, 1.2rem + 2vw, 2.4rem);
+  --t-h3: clamp(1.25rem, 1.05rem + 1vw, 1.6rem);
+  --t-body: 1.0625rem;
+  --t-sm: 0.9375rem;
+  --t-label: 0.8125rem;
+
+  /* --- Elevation (soft, floating clouds — never hard gray) --- */
+  --shadow-rest: 0 1px 2px oklch(0.48 0.14 248 / 0.06);
+  --shadow-float: 0 10px 30px oklch(0.48 0.14 248 / 0.12),
+    0 2px 8px oklch(0.48 0.14 248 / 0.08);
+  --shadow-lift: 0 22px 50px oklch(0.48 0.14 248 / 0.18),
+    0 4px 12px oklch(0.48 0.14 248 / 0.1);
+  --shadow-overlay: 0 32px 80px oklch(0.3 0.1 250 / 0.28);
+
+  /* --- Motion --- */
+  --ease-out-quart: cubic-bezier(0.25, 1, 0.5, 1);
+  --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+  --dur-fast: 160ms;
+  --dur-mid: 320ms;
+  --dur-slow: 620ms;
+
+  /* --- Semantic z-index scale --- */
+  --z-clouds: 0;
+  --z-content: 10;
+  --z-gopher: 20;
+  --z-sticky: 30;
+  --z-nav: 40;
+  --z-modal-backdrop: 50;
+  --z-modal: 60;
+  --z-toast: 70;
+  --z-tooltip: 80;
+}

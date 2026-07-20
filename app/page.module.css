@@ -1,0 +1,218 @@
+.main {
+  position: relative;
+  z-index: var(--z-content);
+}
+
+/* ---------------- Hero ---------------- */
+.hero {
+  min-height: 100svh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: flex-start;
+  padding: clamp(6rem, 12vh, 9rem) var(--page-x) var(--s-2xl);
+  max-width: var(--page-max);
+  margin-inline: auto;
+  width: 100%;
+}
+
+.heroInner {
+  max-width: 42rem;
+}
+
+.kicker {
+  font-family: var(--font-mono);
+  font-size: var(--t-label);
+  letter-spacing: 0.02em;
+  color: var(--azure-deep);
+  margin-bottom: var(--s-md);
+}
+
+.title {
+  font-family: var(--font-display);
+  font-size: var(--t-display);
+  font-weight: 500;
+  line-height: 1;
+  letter-spacing: -0.03em;
+  color: var(--ink-sky);
+  text-wrap: balance;
+  margin-bottom: var(--s-md);
+}
+
+.lead {
+  font-size: clamp(1.125rem, 1rem + 0.6vw, 1.375rem);
+  line-height: 1.55;
+  color: var(--ink);
+  max-width: 34ch;
+  margin-bottom: var(--s-lg);
+  text-wrap: pretty;
+}
+
+.heroActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s-sm);
+}
+
+.scrollHint {
+  margin-top: auto;
+  padding-top: var(--s-xl);
+  font-family: var(--font-mono);
+  font-size: var(--t-label);
+  color: var(--ink);
+  opacity: 0.7;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.scrollHint::after {
+  content: "";
+  width: 1px;
+  height: 2.2rem;
+  background: linear-gradient(var(--ink), transparent);
+  animation: hintPulse 2.4s var(--ease-out-expo) infinite;
+}
+@keyframes hintPulse {
+  0%,
+  100% {
+    opacity: 0.3;
+    transform: scaleY(0.6);
+    transform-origin: top;
+  }
+  50% {
+    opacity: 0.9;
+    transform: scaleY(1);
+    transform-origin: top;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .scrollHint::after {
+    animation: none;
+  }
+}
+
+/* ---------------- Generic section ---------------- */
+.section {
+  max-width: var(--page-max);
+  margin-inline: auto;
+  width: 100%;
+  padding: var(--s-2xl) var(--page-x);
+}
+
+.sectionHead {
+  max-width: 40rem;
+  margin-bottom: var(--s-xl);
+}
+
+.sectionTitle {
+  font-family: var(--font-display);
+  font-size: var(--t-h1);
+  font-weight: 500;
+  line-height: 1.05;
+  letter-spacing: -0.02em;
+  color: var(--ink-sky);
+  text-wrap: balance;
+}
+
+.sectionLede {
+  margin-top: var(--s-sm);
+  font-size: 1.125rem;
+  line-height: 1.55;
+  color: var(--ink);
+  max-width: 50ch;
+  text-wrap: pretty;
+}
+
+/*
+ * Featured work: three tiles, but deliberately not a rigid identical grid —
+ * the first tile spans full width on wider screens for editorial rhythm.
+ */
+.featuredGrid {
+  list-style: none;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: var(--s-lg);
+}
+
+.sectionFoot {
+  margin-top: var(--s-xl);
+  display: flex;
+  justify-content: center;
+}
+
+/* ---------------- About teaser ---------------- */
+.aboutTeaser {
+  max-width: 46rem;
+  background: var(--cloud);
+  border: 1px solid var(--cloud-edge);
+  border-radius: var(--r-lg);
+  padding: clamp(var(--s-lg), 5vw, var(--s-2xl));
+  box-shadow: var(--shadow-float);
+}
+
+.aboutText {
+  margin-top: var(--s-md);
+  font-size: 1.125rem;
+  line-height: 1.6;
+  color: var(--ink);
+  max-width: 60ch;
+  text-wrap: pretty;
+}
+
+.textLink {
+  display: inline-block;
+  margin-top: var(--s-lg);
+  font-weight: 600;
+  color: var(--azure-deep);
+  text-decoration: none;
+  border-bottom: 2px solid transparent;
+  transition: border-color var(--dur-fast) var(--ease-out-quart);
+}
+.textLink:hover {
+  border-bottom-color: var(--azure-deep);
+}
+
+/* ---------------- Contact CTA ---------------- */
+.ctaSection {
+  padding: var(--s-2xl) var(--page-x) var(--s-3xl);
+  display: flex;
+  justify-content: center;
+}
+
+.cta {
+  background: linear-gradient(155deg, var(--azure), var(--azure-deep));
+  color: var(--on-azure);
+  border-radius: var(--r-lg);
+  padding: clamp(var(--s-lg), 7vw, var(--s-3xl)) clamp(var(--s-lg), 6vw, var(--s-2xl));
+  text-align: center;
+  max-width: 52rem;
+  width: 100%;
+  box-shadow: var(--shadow-lift);
+}
+
+.ctaTitle {
+  font-family: var(--font-display);
+  font-size: var(--t-h1);
+  font-weight: 500;
+  line-height: 1.05;
+  letter-spacing: -0.02em;
+  color: var(--on-azure);
+  text-wrap: balance;
+}
+
+.ctaText {
+  margin: var(--s-md) auto var(--s-lg);
+  font-size: 1.1875rem;
+  line-height: 1.55;
+  max-width: 40ch;
+  opacity: 0.92;
+}
+
+.ctaActions :global(.btn) {
+  background: var(--cloud);
+  color: var(--azure-deep);
+}
+.ctaActions :global(.btn):hover {
+  background: var(--gold);
+  color: var(--on-gold);
+}

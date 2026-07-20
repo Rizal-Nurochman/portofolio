@@ -1,0 +1,65 @@
+/*
+ * The companion is fixed to the right edge of the viewport. --climb (1 at page
+ * top, 0 at bottom) drives vertical travel; --hop (0..1) lifts and squashes the
+ * inner hopper for the jump; --facing flips horizontal orientation to match
+ * scroll direction. Only transforms animate.
+ */
+.companion {
+  position: fixed;
+  right: clamp(1rem, 5vw, 5rem);
+  /* travel band: from 72vh (low, page top) up to 22vh (high, page bottom) */
+  top: calc(22vh + var(--climb, 0.5) * 50vh);
+  z-index: var(--z-gopher);
+  pointer-events: none;
+  transform: translateZ(0);
+  transition: top 0.15s ease-out;
+  --facing: 1;
+}
+
+/* The hop: lift up and briefly squash-stretch, scaled by --hop. */
+.hopper {
+  transform:
+    scaleX(var(--facing))
+    translateY(calc(var(--hop, 0) * -34px))
+    scaleY(calc(1 + var(--hop, 0) * 0.08))
+    scaleX(calc(1 - var(--hop, 0) * 0.06));
+  transform-origin: bottom center;
+  will-change: transform;
+}
+
+.gopher {
+  display: block;
+  filter: drop-shadow(0 10px 18px oklch(0.45 0.09 250 / 0.28));
+}
+
+/* A soft idle bob so a still Gopher still breathes. */
+@media (prefers-reduced-motion: no-preference) {
+  .hopper {
+    animation: bob 3.2s ease-in-out infinite alternate;
+  }
+  @keyframes bob {
+    from {
+      translate: 0 0;
+    }
+    to {
+      translate: 0 -6px;
+    }
+  }
+}
+
+/* Smaller and tucked closer to the edge on phones so it never blocks content. */
+@media (max-width: 640px) {
+  .companion {
+    right: 0.5rem;
+    top: calc(30vh + var(--climb, 0.5) * 44vh);
+  }
+  .gopher {
+    width: 84px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .companion {
+    transition: none;
+  }
+}

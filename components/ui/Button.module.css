@@ -1,0 +1,59 @@
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--s-xs);
+  padding: 0.9rem 1.6rem;
+  border-radius: var(--r-full);
+  border: 1px solid transparent;
+  font-family: var(--font-body);
+  font-size: var(--t-sm);
+  font-weight: 600;
+  line-height: 1;
+  letter-spacing: 0.01em;
+  cursor: pointer;
+  text-decoration: none;
+  white-space: nowrap;
+  transition: transform var(--dur-fast) var(--ease-out-quart),
+    background-color var(--dur-fast) var(--ease-out-quart),
+    box-shadow var(--dur-fast) var(--ease-out-quart);
+}
+
+.btn:hover {
+  transform: translateY(-2px);
+}
+
+.btn:active {
+  transform: translateY(0);
+}
+
+.primary {
+  background-color: var(--azure);
+  color: var(--on-azure);
+  box-shadow: var(--shadow-float);
+}
+
+.primary:hover {
+  background-color: var(--azure-deep);
+  box-shadow: var(--shadow-lift);
+}
+
+.secondary {
+  background-color: var(--cloud);
+  color: var(--ink);
+  border-color: var(--cloud-edge);
+  box-shadow: var(--shadow-rest);
+}
+
+.secondary:hover {
+  box-shadow: var(--shadow-float);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .btn,
+  .btn:hover,
+  .btn:active {
+    transform: none;
+    transition: background-color var(--dur-fast) linear;
+  }
+}

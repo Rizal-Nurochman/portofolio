@@ -1,0 +1,50 @@
+.sky {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-clouds);
+  overflow: hidden;
+  pointer-events: none;
+}
+
+/*
+ * The daytime gradient. Taller than the viewport so the top (thinner, higher
+ * air — paler, cooler) is revealed as the page climbs. Sits still; the clouds
+ * carry the parallax.
+ */
+.gradient {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    180deg,
+    var(--sky-high) 0%,
+    var(--sky) 45%,
+    var(--sky-low) 100%
+  );
+}
+
+.layer {
+  position: absolute;
+  inset: 0;
+  will-change: transform;
+}
+
+.cloud {
+  position: absolute;
+  animation: drift 22s ease-in-out infinite alternate;
+}
+
+/* Barely-there horizontal breathing so a still page still feels alive. */
+@keyframes drift {
+  from {
+    transform: translateX(-14px);
+  }
+  to {
+    transform: translateX(14px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cloud {
+    animation: none;
+  }
+}

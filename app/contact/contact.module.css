@@ -1,0 +1,148 @@
+.wrap {
+  max-width: var(--page-max);
+  margin-inline: auto;
+  width: 100%;
+  padding: clamp(7rem, 15vh, 10rem) var(--page-x) var(--s-3xl);
+}
+
+.inner {
+  max-width: 40rem;
+  margin-inline: auto;
+  text-align: center;
+}
+
+/* Gopher waving from a cloud at the summit. */
+.gopherSeat {
+  position: relative;
+  width: 190px;
+  height: 160px;
+  margin: 0 auto var(--s-md);
+}
+.gopher {
+  position: relative;
+  z-index: 1;
+  margin: 0 auto;
+}
+.cloudSeat {
+  position: absolute;
+  left: 50%;
+  bottom: 0;
+  transform: translateX(-50%);
+  width: 180px;
+  height: 48px;
+  background: var(--cloud-soft);
+  border-radius: var(--r-full);
+  box-shadow:
+    0 0 0 16px var(--cloud-soft),
+    40px 6px 0 -2px var(--cloud-soft),
+    -40px 6px 0 -2px var(--cloud-soft);
+  opacity: 0.92;
+}
+
+.altitude {
+  font-family: var(--font-mono);
+  font-size: var(--t-label);
+  color: var(--azure-deep);
+  margin-bottom: var(--s-xs);
+}
+.title {
+  font-family: var(--font-display);
+  font-size: var(--t-display);
+  font-weight: 500;
+  line-height: 1;
+  letter-spacing: -0.03em;
+  color: var(--ink-sky);
+  text-wrap: balance;
+}
+.lead {
+  margin: var(--s-md) auto var(--s-xl);
+  font-size: 1.1875rem;
+  line-height: 1.55;
+  color: var(--ink);
+  max-width: 44ch;
+  text-wrap: pretty;
+}
+
+.channels {
+  list-style: none;
+  display: grid;
+  gap: var(--s-sm);
+  text-align: left;
+}
+
+/*
+ * Each channel is a full cloud-card tap target: label, the actual handle in
+ * large type, and a one-line hint. Lifts and reveals its arrow on hover/focus.
+ */
+.channel {
+  position: relative;
+  display: grid;
+  gap: 2px;
+  background: var(--cloud);
+  border: 1px solid var(--cloud-edge);
+  border-radius: var(--r-md);
+  padding: var(--s-md) var(--s-lg);
+  padding-right: var(--s-2xl);
+  box-shadow: var(--shadow-rest);
+  color: var(--ink);
+  transition:
+    transform var(--dur-mid) var(--ease-out-expo),
+    box-shadow var(--dur-mid) var(--ease-out-expo),
+    border-color var(--dur-fast) var(--ease-out-quart);
+}
+.channel:hover,
+.channel:focus-visible {
+  transform: translateY(-3px);
+  box-shadow: var(--shadow-float);
+  border-color: var(--azure);
+  color: var(--ink);
+}
+
+.channelLabel {
+  font-family: var(--font-mono);
+  font-size: var(--t-label);
+  letter-spacing: 0.02em;
+  color: var(--azure-deep);
+}
+.channelValue {
+  font-family: var(--font-display);
+  font-size: var(--t-h3);
+  font-weight: 500;
+  color: var(--ink-sky);
+}
+.channelHint {
+  font-size: var(--t-sm);
+  color: var(--muted);
+}
+.channelCue {
+  position: absolute;
+  right: var(--s-lg);
+  top: 50%;
+  transform: translateY(-50%) translateX(-6px);
+  font-size: 1.5rem;
+  color: var(--azure);
+  opacity: 0;
+  transition:
+    opacity var(--dur-mid) var(--ease-out-expo),
+    transform var(--dur-mid) var(--ease-out-expo);
+}
+.channel:hover .channelCue,
+.channel:focus-visible .channelCue {
+  opacity: 1;
+  transform: translateY(-50%) translateX(0);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .channel,
+  .channelCue {
+    transition: none;
+  }
+  .channel:hover,
+  .channel:focus-visible {
+    transform: none;
+  }
+  .channelCue {
+    opacity: 1;
+    transform: translateY(-50%);
+  }
+}
