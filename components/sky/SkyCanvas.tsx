@@ -53,6 +53,12 @@ const SKY_TOP = "#7fb2e6"; // --sky-high-ish
 const SKY_MID = "#9cc6f0";
 const SKY_LOW = "#bfe0f7"; // horizon, paler
 
+// Ground layer — the grassy earth you set off from before climbing into sky.
+const GROUND_H = 190; // px of terrain visible at the very start
+const GRASS_TOP = "#8ec26a";
+const GRASS = "#6fae52";
+const SOIL = "#5b8a43";
+
 // The four crisp cloud silhouettes from CloudShape.tsx, on a 200x100 viewBox.
 // Reusing them keeps the canvas sky consistent with the SVG clouds elsewhere,
 // and — crucially — gives every cloud a DEFINED EDGE. Soft radial blobs read as
@@ -177,9 +183,11 @@ export default function SkyCanvas() {
     resize();
 
     let scrollProgress = 0;
+    let scrollY = 0;
     const onScroll = () => {
       const max = document.documentElement.scrollHeight - window.innerHeight;
-      scrollProgress = max > 0 ? Math.min(Math.max(window.scrollY / max, 0), 1) : 0;
+      scrollY = window.scrollY;
+      scrollProgress = max > 0 ? Math.min(Math.max(scrollY / max, 0), 1) : 0;
     };
     onScroll();
 
@@ -221,6 +229,33 @@ export default function SkyCanvas() {
         ctx.drawImage(sprites[cl.sprite], px, py, w, h);
       }
       ctx.globalAlpha = 1;
+
+      // Ground: the journey starts on grassy earth at the foot of the first
+      // screen, then the ground falls away below as you climb into open sky.
+      // Anchored to scrollY (1:1) so it reads as real terrain you leave behind:
+      // scrolling down = climbing up, so the ground moves DOWN off the bottom.
+      const groundTop = height - GROUND_H + scrollY;
+      if (groundTop < height) {
+        // grassy band, extended well past the bottom so no gap shows
+        const gg = ctx.createLinearGradient(0, groundTop, 0, groundTop + GROUND_H);
+        gg.addColorStop(0, GRASS_TOP);
+        gg.addColorStop(0.16, GRASS);
+        gg.addColorStop(1, SOIL);
+        ctx.fillStyle = gg;
+        ctx.fillRect(0, groundTop, width, height - groundTop + 4);
+        // a soft grassy lip so the horizon isn't a hard line
+        ctx.fillStyle = GRASS_TOP;
+        ctx.beginPath();
+        ctx.moveTo(0, groundTop);
+        const step = 26;
+        for (let x = 0; x <= width + step; x += step) {
+          ctx.quadraticCurveTo(x - step / 2, groundTop - 7, x, groundTop);
+        }
+        ctx.lineTo(width, groundTop + 10);
+        ctx.lineTo(0, groundTop + 10);
+        ctx.closePath();
+        ctx.fill();
+      }
 
       raf = requestAnimationFrame(frame);
     };

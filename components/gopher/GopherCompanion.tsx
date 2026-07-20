@@ -30,6 +30,11 @@ export default function GopherCompanion() {
 
     const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
+    // grab the animatable SVG groups once (blink + arm swing live inside the SVG)
+    const eyes = el.querySelector<SVGGElement>(".gopher-eyes");
+    const armL = el.querySelector<SVGGElement>(".gopher-arm-left");
+    const armR = el.querySelector<SVGGElement>(".gopher-arm-right");
+
     let raf = 0;
     let last = performance.now();
     let lastScrollY = window.scrollY;
@@ -38,6 +43,10 @@ export default function GopherCompanion() {
     // travel band as a fraction of viewport height: low at page top, high at bottom
     const LOW = 0.68;
     const HIGH = 0.2;
+
+    // blink scheduling: eyes stay open, then a quick ~140ms squeeze at intervals
+    let nextBlink = 1.5 + Math.random() * 3;
+    let blinkT = -1; // >=0 while a blink is in progress
 
     const frame = (now: number) => {
       const dt = Math.min((now - last) / 1000, 0.05);
@@ -56,29 +65,56 @@ export default function GopherCompanion() {
       // vertical climb position (px from top of viewport)
       const bandTop = (LOW + (HIGH - LOW) * progress) * window.innerHeight;
 
-      // the hop: a repeating clamped bounce. Under reduce-motion, a slow calm bob.
-      let hopY: number;
-      let squashY = 1;
-      let squashX = 1;
-      if (reduce) {
-        hopY = Math.sin(t * 0.8) * 5;
-      } else {
-        const HOP_PERIOD = 1.05;
-        const phase = (now / 1000 / HOP_PERIOD) % 1;
-        // parabolic arc: up then down, peak at phase 0.5
-        const arc = 1 - Math.pow(2 * phase - 1, 2); // 0..1..0
-        const peak = 40 + boost * 34;
-        hopY = -arc * peak;
-        // squash at the bottom of the cycle, stretch near the peak
-        const ground = 1 - arc; // 1 at ground, 0 at peak
-        squashY = 1 - ground * 0.1 + arc * 0.06;
-        squashX = 1 + ground * 0.12 - arc * 0.05;
-      }
+      // The hop always runs — this is the ambient life the mascot needs. It's
+      // decorative, gentle, and non-vestibular, so we keep it under
+      // reduce-motion; only the scroll-driven leap boost is interaction-driven,
+      // and that simply stays at rest when the user isn't scrolling.
+      const HOP_PERIOD = reduce ? 1.6 : 1.0;
+      const phase = (t / HOP_PERIOD) % 1;
+      const arc = 1 - Math.pow(2 * phase - 1, 2); // 0..1..0 parabola
+      const peak = (reduce ? 16 : 42) + (reduce ? 0 : boost * 34);
+      const hopY = -arc * peak;
+      const ground = 1 - arc; // 1 at floor, 0 at apex
+      const squashY = 1 - ground * 0.1 + arc * 0.06;
+      const squashX = 1 + ground * 0.12 - arc * 0.05;
 
       el.style.transform =
         `translate3d(0, ${(bandTop + hopY).toFixed(1)}px, 0) ` +
         `scaleX(${(facing * squashX).toFixed(3)}) scaleY(${squashY.toFixed(3)})`;
       el.style.transformOrigin = "center bottom";
+
+      // arms lift as it rises, drop as it lands — reads as a real jump
+      if (armL && armR) {
+        const swing = arc * 34;
+        armL.style.transform = `rotate(${(-swing).toFixed(1)}deg)`;
+        armR.style.transform = `rotate(${swing.toFixed(1)}deg)`;
+      }
+
+      // blink: periodic quick eye squeeze on the vertical axis
+      if (eyes) {
+        if (blinkT < 0) {
+          nextBlink -= dt;
+          if (nextBlink <= 0) {
+            blinkT = 0;
+            nextBlink = 2 + Math.random() * 4;
+          }
+        } else {
+          blinkT += dt;
+        }
+        // 0.14s blink: close (first half) then open (second half)
+        const DUR = 0.14;
+        let open = 1;
+        if (blinkT >= 0) {
+          const p = blinkT / DUR;
+          if (p >= 1) {
+            blinkT = -1;
+          } else {
+            open = 1 - (1 - Math.abs(p * 2 - 1)); // 1→0→1 triangle
+          }
+        }
+        eyes.style.transform = `scaleY(${Math.max(open, 0.08).toFixed(3)})`;
+        eyes.style.transformOrigin = "100px 92px";
+      }
 
       raf = requestAnimationFrame(frame);
     };
