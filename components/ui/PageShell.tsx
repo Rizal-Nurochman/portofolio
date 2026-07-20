@@ -12,7 +12,7 @@ import Footer from "@/components/ui/Footer";
 export default function PageShell({ children }: { children: ReactNode }) {
   return (
     <>
-      <Sky />
+      <SkyCanvas />
       <GopherCompanion />
       <Nav />
       <main id="main">{children}</main>
