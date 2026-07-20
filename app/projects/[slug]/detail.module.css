@@ -2,7 +2,7 @@
   max-width: 68rem;
   margin-inline: auto;
   width: 100%;
-  padding: clamp(7rem, 16vh, 10rem) var(--page-x) var(--s-3xl);
+  padding: clamp(4.5rem, 9vh, 6.5rem) var(--page-x) var(--s-2xl);
 }
 
 .back {

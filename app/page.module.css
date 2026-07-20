@@ -10,7 +10,7 @@
   flex-direction: column;
   justify-content: center;
   align-items: flex-start;
-  padding: clamp(6rem, 12vh, 9rem) var(--page-x) var(--s-2xl);
+  padding: clamp(4.5rem, 9vh, 7rem) var(--page-x) var(--s-2xl);
   max-width: var(--page-max);
   margin-inline: auto;
   width: 100%;

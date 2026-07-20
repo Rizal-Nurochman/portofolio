@@ -7,8 +7,8 @@
   max-width: var(--page-max);
   margin-inline: auto;
   width: 100%;
-  padding: clamp(7rem, 16vh, 11rem) var(--page-x) var(--s-3xl);
-  min-height: 80svh;
+  padding: clamp(4.5rem, 9vh, 6.5rem) var(--page-x) var(--s-3xl);
+  min-height: 72svh;
   display: flex;
   align-items: center;
 }

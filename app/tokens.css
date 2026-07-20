@@ -55,9 +55,9 @@
   --s-sm: 16px;
   --s-md: 24px;
   --s-lg: 40px;
-  --s-xl: 72px;
-  --s-2xl: 112px;
-  --s-3xl: 160px;
+  --s-xl: 56px;
+  --s-2xl: 80px;
+  --s-3xl: 104px;
 
   /* --- Type families --- */
   --font-display: var(--font-fraunces), Georgia, "Times New Roman", serif;
