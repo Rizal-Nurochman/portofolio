@@ -1,14 +1,14 @@
 /* ============================================================
-   Design tokens — "Perjalanan Awan" portfolio
+   Design tokens - "Perjalanan Awan" portfolio
    Anchored on daytime sky blue with warm sun-gold accent.
    All colors in OKLCH. Source of truth: DESIGN.md
    ============================================================ */
 
 :root {
   /* --- Sky (background system, layered by altitude) --- */
-  --sky-low: oklch(0.86 0.07 235); /* horizon / lower sky — Home */
+  --sky-low: oklch(0.86 0.07 235); /* horizon / lower sky - Home */
   --sky: oklch(0.80 0.10 240); /* mid daytime sky */
-  --sky-high: oklch(0.72 0.13 245); /* upper sky — Contact / peaks */
+  --sky-high: oklch(0.72 0.13 245); /* upper sky - Contact / peaks */
   --sky-deep: oklch(0.62 0.14 248); /* deepest blue, rare accents */
 
   /* --- Clouds (content surfaces) --- */
@@ -28,12 +28,12 @@
   --gopher-body: oklch(0.82 0.08 225); /* light sky-blue body */
   --gopher-belly: oklch(0.95 0.02 225); /* pale belly patch */
   --gopher-limb: oklch(0.75 0.09 225); /* arms/feet, a touch deeper */
-  --gopher-outline: oklch(0.28 0.06 250); /* dark navy outline — keeps it readable on sky */
+  --gopher-outline: oklch(0.28 0.06 250); /* dark navy outline - keeps it readable on sky */
   --gopher-scarf: oklch(0.83 0.15 82); /* gold scarf = the sun accent */
   --gopher-scarf-deep: oklch(0.72 0.14 68); /* scarf tail, deeper gold */
 
   /* --- Ink (text) --- */
-  --ink: oklch(0.24 0.03 250); /* body text — deep navy, ≥7:1 on cloud */
+  --ink: oklch(0.24 0.03 250); /* body text - deep navy, ≥7:1 on cloud */
   --ink-sky: oklch(0.22 0.04 250); /* headings on light sky */
   --muted: oklch(0.46 0.03 250); /* secondary text, ≥4.5:1 on cloud */
   --on-azure: oklch(0.99 0.01 240); /* text on azure fill */
@@ -73,7 +73,7 @@
   --t-sm: 0.9375rem;
   --t-label: 0.8125rem;
 
-  /* --- Elevation (soft, floating clouds — never hard gray) --- */
+  /* --- Elevation (soft, floating clouds - never hard gray) --- */
   --shadow-rest: 0 1px 2px oklch(0.48 0.14 248 / 0.06);
   --shadow-float: 0 10px 30px oklch(0.48 0.14 248 / 0.12),
     0 2px 8px oklch(0.48 0.14 248 / 0.08);
@@ -98,5 +98,5 @@
   --z-modal: 60;
   --z-toast: 70;
   --z-tooltip: 80;
-  --z-intro: 100; /* first-visit cloud curtain — above everything */
+  --z-intro: 100; /* first-visit cloud curtain - above everything */
 }

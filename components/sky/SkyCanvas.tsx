@@ -9,7 +9,7 @@ import styles from "./SkyCanvas.module.css";
  * global `prefers-reduced-motion` rule in globals.css freezes every CSS
  * animation/transition, so an ambient CSS sky dies completely on machines that
  * have "reduce motion" enabled. A JS render loop repaints every frame and stays
- * alive regardless — which is what makes the sky read as genuinely moving.
+ * alive regardless - which is what makes the sky read as genuinely moving.
  *
  * Composition:
  *  - a vertical daytime gradient background (painted each frame)
@@ -20,7 +20,7 @@ import styles from "./SkyCanvas.module.css";
  *    lockstep.
  *  - scroll adds a bounded vertical parallax per band (the "climb"); this is
  *    interaction-driven motion, so it's the one thing we damp under
- *    reduce-motion. The ambient drift/bob keeps going — decorative, gentle,
+ *    reduce-motion. The ambient drift/bob keeps going - decorative, gentle,
  *    non-vestibular.
  *
  * Clouds are pre-rendered once to offscreen sprite canvases and blitted each
@@ -53,7 +53,7 @@ const SKY_TOP = "#7fb2e6"; // --sky-high-ish
 const SKY_MID = "#9cc6f0";
 const SKY_LOW = "#bfe0f7"; // horizon, paler
 
-// Ground layer — the grassy earth you set off from before climbing into sky.
+// Ground layer - the grassy earth you set off from before climbing into sky.
 const GROUND_H = 190; // px of terrain visible at the very start
 const GRASS_TOP = "#8ec26a";
 const GRASS = "#6fae52";
@@ -61,7 +61,7 @@ const SOIL = "#5b8a43";
 
 // The four crisp cloud silhouettes from CloudShape.tsx, on a 200x100 viewBox.
 // Reusing them keeps the canvas sky consistent with the SVG clouds elsewhere,
-// and — crucially — gives every cloud a DEFINED EDGE. Soft radial blobs read as
+// and - crucially - gives every cloud a DEFINED EDGE. Soft radial blobs read as
 // smoke and, having no edge, make drift impossible for the eye to track. A hard
 // silhouette with a gentle top-lit gradient inside reads as a real cloud and
 // its motion is legible.
@@ -231,7 +231,7 @@ export default function SkyCanvas() {
       // Ground: you begin high in open sky and DESCEND as you scroll down, so
       // the grassy earth rises up from below to meet you. At the top of the page
       // it sits just off the bottom edge (hidden); by the bottom of the page the
-      // full terrain rests at the foot of the screen — you've landed.
+      // full terrain rests at the foot of the screen - you've landed.
       // Tied to scrollProgress so the last stretch of the page is the touchdown.
       const groundReveal = Math.max(scrollProgress - 0.55, 0) / 0.45; // 0 until 55%, →1 at end
       const groundTop = height - GROUND_H * groundReveal;

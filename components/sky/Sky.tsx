@@ -9,8 +9,8 @@ import styles from "./Sky.module.css";
  * Fixed full-viewport sky behind all content. A daytime gradient plus three
  * depth bands of clouds that ALWAYS drift and bob continuously (CSS animation),
  * so the sky is visibly alive whether or not you scroll. On top of that idle
- * motion, scrolling adds a small, progress-bounded parallax per band — nearer
- * bands shift a little more — but the shift is capped so clouds never slide off
+ * motion, scrolling adds a small, progress-bounded parallax per band - nearer
+ * bands shift a little more - but the shift is capped so clouds never slide off
  * screen and leave an empty blue void.
  *
  * All movement is transform/translate, batched through requestAnimationFrame.
@@ -73,7 +73,7 @@ export default function Sky() {
       const max = document.documentElement.scrollHeight - window.innerHeight;
       const progress = max > 0 ? Math.min(y / max, 1) : 0;
 
-      // gradient drifts up a touch as you climb — thinner, higher air
+      // gradient drifts up a touch as you climb - thinner, higher air
       if (gradientRef.current) {
         gradientRef.current.style.transform = `translateY(${-progress * 6}%)`;
       }

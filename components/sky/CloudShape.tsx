@@ -2,7 +2,7 @@ import type { CSSProperties } from "react";
 
 /**
  * A single puffy cloud rendered as inline SVG so we can tint, scale, and
- * animate it cheaply with transforms. Decorative only — always aria-hidden.
+ * animate it cheaply with transforms. Decorative only - always aria-hidden.
  *
  * Four silhouettes keep the sky from looking like one stamp repeated. Each is
  * drawn on a 200x100 viewBox and stretched via width.

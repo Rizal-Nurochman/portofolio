@@ -10,8 +10,8 @@ interface BaseProps {
 }
 
 /**
- * Pill button in two weights: primary (azure fill, white text — the "hire me"
- * action) and secondary (white cloud fill, ink text, hairline border — softer
+ * Pill button in two weights: primary (azure fill, white text - the "hire me"
+ * action) and secondary (white cloud fill, ink text, hairline border - softer
  * fallbacks like "view all"). Renders as a Next <Link> when `href` is set,
  * otherwise a native <button>.
  */

@@ -17,7 +17,7 @@ interface RevealProps {
  * Scroll-triggered entrance. The content is fully rendered and readable by
  * default (opacity/transform only shift the *presentation*); an Intersection
  * Observer adds the settled class when it scrolls into view. If JS never runs,
- * or under reduced-motion, it shows immediately with no movement — the reveal
+ * or under reduced-motion, it shows immediately with no movement - the reveal
  * enhances an already-visible default, it never gates content.
  */
 export default function Reveal({

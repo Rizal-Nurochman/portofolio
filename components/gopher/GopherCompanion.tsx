@@ -6,7 +6,7 @@ import styles from "./GopherCompanion.module.css";
 
 /**
  * The Gopher that climbs the sky. Driven by a single requestAnimationFrame loop
- * that writes the wrapper's transform every frame — deliberately NOT a CSS
+ * that writes the wrapper's transform every frame - deliberately NOT a CSS
  * animation, because the global prefers-reduced-motion rule in globals.css
  * freezes all CSS animation. A JS loop keeps the hop alive on every machine.
  *
@@ -18,7 +18,7 @@ import styles from "./GopherCompanion.module.css";
  *     boosts the hop height.
  *
  * Under reduce-motion we keep a gentle, slow bob (decorative, non-vestibular)
- * but stop the scroll-driven leaping — motion triggered by interaction is the
+ * but stop the scroll-driven leaping - motion triggered by interaction is the
  * part WCAG 2.3.3 targets. Decorative throughout (aria-hidden).
  */
 export default function GopherCompanion() {
@@ -66,7 +66,7 @@ export default function GopherCompanion() {
       // vertical position (px from top of viewport): starts high, descends to ground
       const bandTop = (HIGH + (LOW - HIGH) * progress) * window.innerHeight;
 
-      // The hop always runs — this is the ambient life the mascot needs. It's
+      // The hop always runs - this is the ambient life the mascot needs. It's
       // decorative, gentle, and non-vestibular, so we keep it under
       // reduce-motion; only the scroll-driven leap boost is interaction-driven,
       // and that simply stays at rest when the user isn't scrolling.
@@ -84,7 +84,7 @@ export default function GopherCompanion() {
         `scaleX(${(facing * squashX).toFixed(3)}) scaleY(${squashY.toFixed(3)})`;
       el.style.transformOrigin = "center bottom";
 
-      // arms lift as it rises, drop as it lands — reads as a real jump
+      // arms lift as it rises, drop as it lands - reads as a real jump
       if (armL && armR) {
         const swing = arc * 34;
         armL.style.transform = `rotate(${(-swing).toFixed(1)}deg)`;

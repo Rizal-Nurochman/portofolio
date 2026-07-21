@@ -4,14 +4,14 @@ import { forwardRef } from "react";
 
 /**
  * The Gopher mascot, drawn from scratch in the spirit of Renée French's
- * original (CC-BY 3.0 — attributed in the footer). Not a copy of the asset:
+ * original (CC-BY 3.0 - attributed in the footer). Not a copy of the asset:
  * a friendly rodent with a rounded body, big round eyes, two front teeth,
  * little arms and feet, plus a gold scarf that ties it to our sun accent and
  * keeps the light-blue body readable against a light-blue sky.
  *
  * Pose is driven entirely by CSS custom properties consumed by the caller's
  * stylesheet (arm/leg rotation, squash). The SVG itself just exposes named
- * groups; the scroll layer decides how they move. Decorative — the wrapper
+ * groups; the scroll layer decides how they move. Decorative - the wrapper
  * carries aria-hidden.
  */
 
@@ -73,7 +73,7 @@ const GopherSVG = forwardRef<SVGSVGElement, Props>(function GopherSVG(
       {/* belly patch */}
       <ellipse cx="100" cy="150" rx="40" ry="50" fill="var(--gopher-belly)" />
 
-      {/* arms — pivot from the shoulder via transform-origin in CSS */}
+      {/* arms - pivot from the shoulder via transform-origin in CSS */}
       <g className="gopher-arm gopher-arm-left" style={{ transformOrigin: "62px 128px" }}>
         <ellipse cx="52" cy="150" rx="13" ry="22" fill="var(--gopher-limb)" stroke="var(--gopher-outline)" strokeWidth="3" />
       </g>
@@ -81,7 +81,7 @@ const GopherSVG = forwardRef<SVGSVGElement, Props>(function GopherSVG(
         <ellipse cx="148" cy="150" rx="13" ry="22" fill="var(--gopher-limb)" stroke="var(--gopher-outline)" strokeWidth="3" />
       </g>
 
-      {/* scarf — the warm accent that makes it pop off the sky */}
+      {/* scarf - the warm accent that makes it pop off the sky */}
       <path
         d="M62 96 Q100 116 138 96 L140 112 Q100 132 60 112 Z"
         fill="var(--gopher-scarf)"
@@ -103,7 +103,7 @@ const GopherSVG = forwardRef<SVGSVGElement, Props>(function GopherSVG(
       <circle cx="58" cy="52" r="15" fill="var(--gopher-body)" stroke="var(--gopher-outline)" strokeWidth="4" />
       <circle cx="142" cy="52" r="15" fill="var(--gopher-body)" stroke="var(--gopher-outline)" strokeWidth="4" />
 
-      {/* eyes — big white rounds with dark pupils */}
+      {/* eyes - big white rounds with dark pupils */}
       <g className="gopher-eyes">
         <circle cx="80" cy="92" r="20" fill="#fff" stroke="var(--gopher-outline)" strokeWidth="3.5" />
         <circle cx="120" cy="92" r="20" fill="#fff" stroke="var(--gopher-outline)" strokeWidth="3.5" />

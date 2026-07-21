@@ -16,7 +16,7 @@
 }
 
 /*
- * Each half is 60% wide so they overlap generously in the middle — the mass
+ * Each half is 60% wide so they overlap generously in the middle - the mass
  * reads as one solid cloud bank with no seam. They part to opposite edges.
  */
 .half {
@@ -24,7 +24,7 @@
   top: 0;
   width: 60%;
   height: 100%;
-  transition: transform 1.5s var(--ease-out-expo);
+  transition: transform 2.2s var(--ease-out-expo);
   will-change: transform;
 }
 .left {
@@ -102,7 +102,7 @@
   border-radius: var(--r-full);
   background: linear-gradient(90deg, var(--azure), var(--azure-deep));
   transform-origin: left center;
-  /* scaleX (0..1) is set inline from the counter — transform, not width, so it
+  /* scaleX (0..1) is set inline from the counter - transform, not width, so it
      runs on the compositor with no layout thrash. */
   transform: scaleX(0);
   transition: transform 0.12s linear;

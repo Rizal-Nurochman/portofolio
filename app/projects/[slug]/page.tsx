@@ -19,13 +19,13 @@ export function generateMetadata({
   const project = getProject(params.slug);
   if (!project) return { title: "Project not found" };
   return {
-    title: `${project.title} — Perjalanan Awan`,
+    title: `${project.title} · Perjalanan Awan`,
     description: project.summary,
   };
 }
 
 /**
- * Project detail — the case study for one piece of work: what it is, what was
+ * Project detail - the case study for one piece of work: what it is, what was
  * built, the stack, and the two actions that matter (live demo + source). Copy
  * here is placeholder-realistic; swap for the real write-up per project.
  */
@@ -86,7 +86,7 @@ export default function ProjectDetailPage({
 
             <h2 className={styles.h2}>What I built</h2>
             <p>
-              {project.role} A short walk through the architecture goes here —
+              {project.role} A short walk through the architecture goes here:
               the API surface, the data model, and the parts you&apos;d want a
               reviewer to notice.
             </p>

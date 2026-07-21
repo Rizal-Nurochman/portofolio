@@ -7,12 +7,12 @@ import { projects } from "@/lib/projects";
 import styles from "./projects.module.css";
 
 export const metadata: Metadata = {
-  title: "Projects — Perjalanan Awan",
+  title: "Projects · Perjalanan Awan",
   description: "Web services and APIs built with Go and Gin.",
 };
 
 /**
- * Projects — one altitude up from Home. The full grid of work; each tile links
+ * Projects - one altitude up from Home. The full grid of work; each tile links
  * to its own detail page. This is the most important surface after Home; the
  * grid is real, the detail pages are the next build pass.
  */

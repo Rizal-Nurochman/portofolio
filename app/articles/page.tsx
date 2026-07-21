@@ -8,13 +8,13 @@ import GopherSVG from "@/components/gopher/GopherSVG";
 import styles from "./articles.module.css";
 
 export const metadata: Metadata = {
-  title: "Articles — Perjalanan Awan",
+  title: "Articles · Perjalanan Awan",
   description: "Writing is on the way. The Gopher is keeping the seat warm.",
 };
 
 /**
  * Articles is intentionally a single "coming soon" state for now: the Gopher
- * sits on a cloud, waiting. No scroll companion here — the waiting Gopher is
+ * sits on a cloud, waiting. No scroll companion here - the waiting Gopher is
  * the whole point, so it's placed inline and calm. Kept in the nav so the site
  * reads as living and about to grow.
  */
@@ -32,7 +32,7 @@ export default function ArticlesPage() {
           <p className={styles.altitude}>Altitude · Articles</p>
           <h1 className={styles.title}>Coming soon</h1>
           <p className={styles.text}>
-            I&apos;m writing up a few things — notes on Go, building APIs with
+            I&apos;m writing up a few things: notes on Go, building APIs with
             Gin, and lessons from projects that didn&apos;t go to plan. The
             Gopher&apos;s saving the seat until they&apos;re ready.
           </p>

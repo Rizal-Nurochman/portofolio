@@ -129,7 +129,7 @@ main {
 }
 
 /* ============================================================
-   Focus — visible for keyboard users, AA-contrast ring
+   Focus - visible for keyboard users, AA-contrast ring
    ============================================================ */
 :focus-visible {
   outline: 3px solid var(--azure-deep);
@@ -177,7 +177,7 @@ main {
 }
 
 /* ============================================================
-   Reduced motion — global guard.
+   Reduced motion - global guard.
    Component-level fallbacks live with their components; this
    neutralizes any incidental transitions/animations.
    ============================================================ */

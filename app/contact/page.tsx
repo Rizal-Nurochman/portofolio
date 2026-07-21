@@ -7,7 +7,7 @@ import GopherSVG from "@/components/gopher/GopherSVG";
 import styles from "./contact.module.css";
 
 export const metadata: Metadata = {
-  title: "Contact — Perjalanan Awan",
+  title: "Contact · Perjalanan Awan",
   description:
     "Reach out by email or social. The primary way to get in touch about work.",
 };
@@ -35,7 +35,7 @@ const CHANNELS = [
 ];
 
 /**
- * Contact is the peak of the climb — the whole site funnels here. The Gopher
+ * Contact is the peak of the climb - the whole site funnels here. The Gopher
  * waves from the top of the clouds. No form: the brief is socials + email, so
  * the channels are the content, each a clear, large tap target.
  */

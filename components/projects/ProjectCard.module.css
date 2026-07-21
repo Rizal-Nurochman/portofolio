@@ -20,7 +20,7 @@
 }
 
 /* The preview band. Real screenshots fill it; until then a soft tinted panel
-   with the project's initials stands in — clearly a placeholder, on-brand. */
+   with the project's initials stands in - clearly a placeholder, on-brand. */
 .preview {
   position: relative;
   aspect-ratio: 16 / 10;

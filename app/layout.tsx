@@ -23,7 +23,7 @@ const jetbrainsMono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Portofolio — Perjalanan Awan",
+  title: "Portofolio · Perjalanan Awan",
   description:
     "Portofolio developer: proyek web dengan Go & Gin, dibawakan lewat perjalanan menaiki awan.",
 };

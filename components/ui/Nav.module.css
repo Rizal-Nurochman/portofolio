@@ -7,7 +7,7 @@
     backdrop-filter var(--dur-mid) var(--ease-out-quart);
 }
 
-/* Frosted cloud only once scrolled — transparent over the hero sky. */
+/* Frosted cloud only once scrolled - transparent over the hero sky. */
 .scrolled {
   background: oklch(1 0 0 / 0.72);
   backdrop-filter: blur(14px) saturate(1.4);
@@ -153,7 +153,7 @@
   background: var(--cloud-soft);
 }
 
-/* Skip link — hidden until focused. */
+/* Skip link - hidden until focused. */
 .skip {
   position: absolute;
   left: 50%;

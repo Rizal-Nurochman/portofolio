@@ -34,7 +34,7 @@ export default function Nav() {
       </a>
       <div className={styles.inner}>
         <Link href="/" className={styles.brand}>
-          {/* Name placeholder — swap for real name/logo */}
+          {/* Name placeholder - swap for real name/logo */}
           <span className={styles.mark} aria-hidden="true" />
           Your Name
         </Link>

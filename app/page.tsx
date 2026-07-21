@@ -10,7 +10,7 @@ import { featuredProjects } from "@/lib/projects";
 import styles from "./page.module.css";
 
 /**
- * Home — the lowest altitude of the climb. Hero at cloud level, a peek at the
+ * Home - the lowest altitude of the climb. Hero at cloud level, a peek at the
  * strongest work, a one-line invitation to the story, and the primary "get in
  * touch" call. The Sky and Gopher live at the page shell so they persist across
  * the whole journey; content sits in cloud-white surfaces to stay readable.
@@ -31,7 +31,7 @@ export default function HomePage() {
               Your Name
             </h1>
             <p className={styles.lead}>
-              I build reliable web services and APIs — the kind of thing you
+              I build reliable web services and APIs, the kind of thing you
               don&apos;t notice because it just keeps working. Come climb through
               a few of them.
             </p>
@@ -86,8 +86,8 @@ export default function HomePage() {
               A little about the climb
             </h2>
             <p className={styles.aboutText}>
-              I&apos;m a developer who likes systems that hold up under pressure
-              — clean APIs, honest error handling, and code that reads well at
+              I&apos;m a developer who likes systems that hold up under pressure:
+              clean APIs, honest error handling, and code that reads well at
               2am. There&apos;s a longer story, with the schools and the
               detours, up ahead.
             </p>
@@ -97,7 +97,7 @@ export default function HomePage() {
           </Reveal>
         </section>
 
-        {/* Contact CTA — the peak invitation */}
+        {/* Contact CTA - the peak invitation */}
         <section className={styles.ctaSection} aria-labelledby="cta-title">
           <Reveal className={styles.cta}>
             <h2 id="cta-title" className={styles.ctaTitle}>

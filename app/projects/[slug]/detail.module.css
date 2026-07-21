@@ -45,7 +45,7 @@
   margin-top: var(--s-lg);
 }
 
-/* Preview banner — real screenshot, or a colored sky/gold placeholder */
+/* Preview banner - real screenshot, or a colored sky/gold placeholder */
 .preview {
   margin-top: var(--s-xl);
   border-radius: var(--r-lg);

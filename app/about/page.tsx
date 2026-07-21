@@ -4,7 +4,7 @@ import Reveal from "@/components/ui/Reveal";
 import styles from "./about.module.css";
 
 export const metadata: Metadata = {
-  title: "About — Perjalanan Awan",
+  title: "About · Perjalanan Awan",
   description:
     "The climb so far: education, organisations, and how I work as a Go developer.",
 };
@@ -21,12 +21,12 @@ type Entry = {
 
 const timeline: Entry[] = [
   {
-    when: "2024 — now",
+    when: "2024 - now",
     title: "Backend Developer",
     place: "Freelance / personal projects",
     kind: "organisation",
     detail:
-      "Building web services and APIs in Go and Gin — the projects you see here.",
+      "Building web services and APIs in Go and Gin - the projects you see here.",
   },
   {
     when: "2023",
@@ -37,12 +37,12 @@ const timeline: Entry[] = [
       "Led a small team building internal tooling; learned to ship with other people.",
   },
   {
-    when: "2021 — 2025",
+    when: "2021 - 2025",
     title: "Informatics / Computer Science",
     place: "Your University",
     kind: "education",
     detail:
-      "Where the systems thinking started. Placeholder — add your real programme and focus.",
+      "Where the systems thinking started. Placeholder - add your real programme and focus.",
   },
 ];
 
@@ -54,7 +54,7 @@ export default function AboutPage() {
           <p className={styles.altitude}>Altitude · About</p>
           <h1 className={styles.title}>The climb so far</h1>
           <p className={styles.lead}>
-            I&apos;m a developer who likes systems that hold up under pressure —
+            I&apos;m a developer who likes systems that hold up under pressure:
             clean APIs, honest error handling, and code that still reads well at
             2am. Mostly Go and Gin, and a real fondness for the little blue
             Gopher hopping up the side of this page.

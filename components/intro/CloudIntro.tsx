@@ -6,7 +6,7 @@ import styles from "./CloudIntro.module.css";
 /**
  * First-visit intro. A soft mass of clouds gathers over the whole screen with a
  * progress bar filling 1→100 underneath. When it reaches 100 the cloud mass
- * parts down the middle — the two halves drift apart slowly — to reveal the
+ * parts down the middle - the two halves drift apart slowly - to reveal the
  * site behind.
  *
  * Driven by a requestAnimationFrame counter (not CSS keyframes) so the global
@@ -44,8 +44,8 @@ export default function CloudIntro() {
 
     setPhase("counting");
 
-    // deliberately unhurried: ~3.4s to fill, so 1→100 reads as a real load
-    const COUNT_MS = reduce ? 600 : 3400;
+    // deliberately unhurried: ~5s to fill, so 1→100 reads as a real load
+    const COUNT_MS = reduce ? 600 : 5000;
     const start = performance.now();
 
     const tick = (now: number) => {
@@ -59,7 +59,7 @@ export default function CloudIntro() {
       } else {
         setPhase("parting");
         // the slow reveal: clouds drift apart, then unlock + remove
-        const PART_MS = reduce ? 400 : 1600;
+        const PART_MS = reduce ? 400 : 2200;
         window.setTimeout(() => {
           document.body.style.overflow = prevOverflow;
           try {
@@ -118,7 +118,7 @@ export default function CloudIntro() {
 /**
  * One half of the covering cloud mass: a set of clean, overlapping white puffs
  * with a soft gradient, extending past the center seam so the two halves meet
- * with no gap. A crisp, rounded cloud edge — not scalloped noise.
+ * with no gap. A crisp, rounded cloud edge - not scalloped noise.
  */
 function CloudMass({ side }: { side: "left" | "right" }) {
   const id = `cloudmass-${side}`;
