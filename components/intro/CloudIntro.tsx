@@ -1,26 +1,40 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import dynamic from "next/dynamic";
 import styles from "./CloudIntro.module.css";
 
+// three.js only loads when we actually mount the 3D scene (never on the server,
+// never for reduced-motion / no-WebGL visitors) so it stays out of the base bundle.
+const CloudScene = dynamic(() => import("./CloudScene"), { ssr: false });
+
+// Cheap one-shot WebGL probe. If the context can't be made, fall back to SVG.
+function hasWebGL(): boolean {
+  try {
+    const c = document.createElement("canvas");
+    return !!(c.getContext("webgl") || c.getContext("experimental-webgl"));
+  } catch {
+    return false;
+  }
+}
+
 /**
- * First-visit intro. A soft mass of clouds gathers over the whole screen with a
- * progress bar filling 1→100 underneath. When it reaches 100 the cloud mass
- * parts down the middle - the two halves drift apart slowly - to reveal the
- * site behind.
+ * First-visit intro. The camera sits inside a volumetric cloud bank (three.js)
+ * with a progress counter filling 1→100 underneath. At 100 the camera rushes
+ * FORWARD through the clouds and the fog clears - you break through into open
+ * sky, revealing the site. Reduced-motion / no-WebGL visitors get a lightweight
+ * SVG cloud curtain that parts instead, with no three.js loaded at all.
  *
- * Driven by a requestAnimationFrame counter (not CSS keyframes) so the global
- * prefers-reduced-motion freeze can't stall it. Reduce-motion still shortens the
- * whole thing to a brief hold + quick fade instead of the slow theatrical part.
- *
- * Shown once per browser session (sessionStorage) so moving between pages during
- * one visit doesn't replay it. Scroll is locked until it finishes.
+ * The counter is a requestAnimationFrame timer (not CSS keyframes) so the global
+ * prefers-reduced-motion freeze can't stall it. Shown once per browser session
+ * (sessionStorage); scroll is locked until it finishes.
  */
 export default function CloudIntro() {
   const [phase, setPhase] = useState<"idle" | "counting" | "parting" | "done">(
     "idle"
   );
   const [count, setCount] = useState(0);
+  const [use3d, setUse3d] = useState(false);
   const rafRef = useRef(0);
 
   useEffect(() => {
@@ -38,6 +52,8 @@ export default function CloudIntro() {
     const reduce = window.matchMedia(
       "(prefers-reduced-motion: reduce)"
     ).matches;
+    const with3d = !reduce && hasWebGL();
+    setUse3d(with3d);
 
     const prevOverflow = document.body.style.overflow;
     document.body.style.overflow = "hidden";
@@ -58,7 +74,7 @@ export default function CloudIntro() {
         rafRef.current = requestAnimationFrame(tick);
       } else {
         setPhase("parting");
-        // the slow reveal: clouds drift apart, then unlock + remove
+        // the break-through: camera flies out (3d) or the SVG halves part
         const PART_MS = reduce ? 400 : 2200;
         window.setTimeout(() => {
           document.body.style.overflow = prevOverflow;
@@ -90,13 +106,21 @@ export default function CloudIntro() {
       aria-live="polite"
       aria-label={`Loading ${count} percent`}
     >
-      {/* two cloud halves that overlap in the center, then part */}
-      <div className={`${styles.half} ${styles.left}`} aria-hidden="true">
-        <CloudMass side="left" />
-      </div>
-      <div className={`${styles.half} ${styles.right}`} aria-hidden="true">
-        <CloudMass side="right" />
-      </div>
+      {use3d ? (
+        <div className={styles.scene} aria-hidden="true">
+          <CloudScene parting={parting} />
+        </div>
+      ) : (
+        <>
+          {/* fallback: two cloud halves that overlap in the center, then part */}
+          <div className={`${styles.half} ${styles.left}`} aria-hidden="true">
+            <CloudMass side="left" />
+          </div>
+          <div className={`${styles.half} ${styles.right}`} aria-hidden="true">
+            <CloudMass side="right" />
+          </div>
+        </>
+      )}
 
       {/* counter + progress bar, centered, fading as the clouds part */}
       <div className={styles.hud} aria-hidden="true">

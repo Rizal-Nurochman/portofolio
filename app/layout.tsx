@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import { Fraunces, Instrument_Sans, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 import CloudIntro from "@/components/intro/CloudIntro";
+import SkyCanvas from "@/components/sky/SkyCanvas";
+import GopherCompanion from "@/components/gopher/GopherCompanion";
 
 const fraunces = Fraunces({
   subsets: ["latin"],
@@ -23,9 +25,9 @@ const jetbrainsMono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Portofolio · Perjalanan Awan",
+  title: "Rizal | Mohamad Rizal Nurochman - Backend Engineer",
   description:
-    "Portofolio developer: proyek web dengan Go & Gin, dibawakan lewat perjalanan menaiki awan.",
+    "Portofolio developer: proyek web dengan Go & Gin yang dibawakan lewat perjalanan menaiki awan.",
 };
 
 export default function RootLayout({
