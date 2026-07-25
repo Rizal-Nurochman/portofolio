@@ -9,6 +9,8 @@ const LINKS = [
   { href: "/about", label: "About" },
   { href: "/articles", label: "Articles" },
   { href: "/contact", label: "Contact" },
+  { href: "https://github.com/Rizal-Nurochman", label: "GitHub", icon: "github" as const },
+  { href: "https://www.linkedin.com/in/mohamad-rizal-nurochman", label: "LinkedIn", icon: "linkedin" as const }
 ];
 
 /**

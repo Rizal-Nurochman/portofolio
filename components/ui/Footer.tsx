@@ -1,4 +1,5 @@
 import Link from "next/link";
+import BrandIcon from "./BrandIcon";
 import styles from "./Footer.module.css";
 
 const EXPLORE = [
@@ -8,12 +9,11 @@ const EXPLORE = [
   { href: "/contact", label: "Contact" },
 ];
 
-// Socials + email are the primary way to reach out (PRODUCT.md). Swap the
-// placeholder handles/address for the real ones.
+// Socials + email are the primary way to reach out (PRODUCT.md).
 const CONNECT = [
-  { href: "mailto:you@example.com", label: "Email" },
-  { href: "https://github.com/", label: "GitHub" },
-  { href: "https://www.linkedin.com/", label: "LinkedIn" },
+  { href: "mailto:muhamadrizalnurohman@gmail.com", label: "Email", icon: "email" as const },
+  { href: "https://github.com/Rizal-Nurochman", label: "GitHub", icon: "github" as const },
+  { href: "https://www.linkedin.com/in/mohamad-rizal-nurochman", label: "LinkedIn", icon: "linkedin" as const },
 ];
 
 /**
@@ -25,7 +25,7 @@ export default function Footer() {
     <footer className={styles.footer}>
       <div className={styles.inner}>
         <div className={styles.brandCol}>
-          <p className={styles.wordmark}>Your Name</p>
+          <p className={styles.wordmark}>Rizal Nurochman</p>
           <p className={styles.tagline}>
             Building web things with Go &amp; Gin. Let&apos;s make something.
           </p>
@@ -50,6 +50,7 @@ export default function Footer() {
               target={l.href.startsWith("http") ? "_blank" : undefined}
               rel={l.href.startsWith("http") ? "noreferrer" : undefined}
             >
+              <BrandIcon name={l.icon} size={16} className={styles.linkIcon} />
               {l.label}
             </a>
           ))}
@@ -57,7 +58,7 @@ export default function Footer() {
       </div>
 
       <div className={styles.legal}>
-        <p>© {new Date().getFullYear()} Your Name. All rights reserved.</p>
+        <p>© {new Date().getFullYear()} Rizal. All rights reserved.</p>
         <p className={styles.credit}>
           The Go Gopher by{" "}
           <a

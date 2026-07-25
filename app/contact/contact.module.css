@@ -5,40 +5,12 @@
   padding: clamp(4.5rem, 9vh, 6.5rem) var(--page-x) var(--s-2xl);
 }
 
-.inner {
-  max-width: 40rem;
-  margin-inline: auto;
+/* Centered head above the two-column body. */
+.head {
+  max-width: 44rem;
+  margin: 0 auto var(--s-2xl);
   text-align: center;
 }
-
-/* Gopher waving from a cloud at the summit. */
-.gopherSeat {
-  position: relative;
-  width: 190px;
-  height: 160px;
-  margin: 0 auto var(--s-md);
-}
-.gopher {
-  position: relative;
-  z-index: 1;
-  margin: 0 auto;
-}
-.cloudSeat {
-  position: absolute;
-  left: 50%;
-  bottom: 0;
-  transform: translateX(-50%);
-  width: 180px;
-  height: 48px;
-  background: var(--cloud-soft);
-  border-radius: var(--r-full);
-  box-shadow:
-    0 0 0 16px var(--cloud-soft),
-    40px 6px 0 -2px var(--cloud-soft),
-    -40px 6px 0 -2px var(--cloud-soft);
-  opacity: 0.92;
-}
-
 .altitude {
   font-family: var(--font-mono);
   font-size: var(--t-label);
@@ -55,7 +27,7 @@
   text-wrap: balance;
 }
 .lead {
-  margin: var(--s-md) auto var(--s-xl);
+  margin: var(--s-md) auto 0;
   font-size: 1.1875rem;
   line-height: 1.55;
   color: var(--ink);
@@ -63,28 +35,114 @@
   text-wrap: pretty;
 }
 
+/* Two-column body: invitation left, channels right. */
+.grid {
+  display: grid;
+  grid-template-columns: 1fr 1.15fr;
+  gap: var(--s-2xl);
+  align-items: start;
+}
+
+/* Left invitation panel. */
+.aside {
+  position: sticky;
+  top: calc(var(--s-3xl) + var(--s-md));
+  background: var(--cloud);
+  border: 1px solid var(--cloud-edge);
+  border-radius: var(--r-md);
+  padding: var(--s-xl);
+  box-shadow: var(--shadow-rest);
+}
+.asideTitle {
+  font-family: var(--font-display);
+  font-size: var(--t-h3);
+  font-weight: 500;
+  color: var(--ink-sky);
+  letter-spacing: -0.02em;
+  margin-bottom: var(--s-sm);
+}
+.asideText {
+  color: var(--ink);
+  line-height: 1.55;
+  margin-bottom: var(--s-lg);
+}
+.location {
+  font-family: var(--font-mono);
+  font-size: var(--t-sm);
+  color: var(--muted);
+  margin-bottom: var(--s-md);
+}
+.status {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s-xs);
+  font-family: var(--font-mono);
+  font-size: var(--t-sm);
+  color: var(--azure-deep);
+  background: var(--sky-low);
+  padding: var(--s-2xs) var(--s-sm);
+  border-radius: 7px;
+}
+.statusDot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #22c55e;
+  box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.18);
+}
+
+/* Right column - gopher + channel cards. */
+.channelCol {
+  display: flex;
+  flex-direction: column;
+}
+.gopherSeat {
+  position: relative;
+  width: 170px;
+  height: 148px;
+  margin: 0 auto var(--s-md);
+}
+.gopher {
+  position: relative;
+  z-index: 1;
+  margin: 0 auto;
+}
+.cloudSeat {
+  position: absolute;
+  left: 50%;
+  bottom: 0;
+  transform: translateX(-50%);
+  width: 160px;
+  height: 42px;
+  background: var(--cloud-soft);
+  border-radius: var(--r-full);
+  box-shadow:
+    0 0 0 14px var(--cloud-soft),
+    36px 6px 0 -2px var(--cloud-soft),
+    -36px 6px 0 -2px var(--cloud-soft);
+  opacity: 0.92;
+}
+
 .channels {
   list-style: none;
   display: grid;
   gap: var(--s-sm);
-  text-align: left;
 }
 
-/*
- * Each channel is a full cloud-card tap target: label, the actual handle in
- * large type, and a one-line hint. Lifts and reveals its arrow on hover/focus.
- */
+/* Channel card: icon (left) + body (label/value/hint) + arrow cue. */
 .channel {
   position: relative;
   display: grid;
-  gap: 2px;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: var(--s-md);
   background: var(--cloud);
   border: 1px solid var(--cloud-edge);
   border-radius: var(--r-md);
   padding: var(--s-md) var(--s-lg);
-  padding-right: var(--s-2xl);
   box-shadow: var(--shadow-rest);
   color: var(--ink);
+  text-decoration: none;
   transition:
     transform var(--dur-mid) var(--ease-out-expo),
     box-shadow var(--dur-mid) var(--ease-out-expo),
@@ -95,9 +153,33 @@
   transform: translateY(-3px);
   box-shadow: var(--shadow-float);
   border-color: var(--azure);
-  color: var(--ink);
 }
 
+.channelIcon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: var(--r-sm);
+  background: var(--sky-low);
+  color: var(--azure-deep);
+  transition:
+    background var(--dur-fast) var(--ease-out-quart),
+    color var(--dur-fast) var(--ease-out-quart);
+  flex-shrink: 0;
+}
+.channel:hover .channelIcon,
+.channel:focus-visible .channelIcon {
+  background: var(--azure);
+  color: var(--cloud);
+}
+
+.channelBody {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
 .channelLabel {
   font-family: var(--font-mono);
   font-size: var(--t-label);
@@ -106,22 +188,22 @@
 }
 .channelValue {
   font-family: var(--font-display);
-  font-size: var(--t-h3);
+  font-size: var(--t-h4, 1.25rem);
   font-weight: 500;
   color: var(--ink-sky);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 .channelHint {
   font-size: var(--t-sm);
   color: var(--muted);
 }
 .channelCue {
-  position: absolute;
-  right: var(--s-lg);
-  top: 50%;
-  transform: translateY(-50%) translateX(-6px);
   font-size: 1.5rem;
   color: var(--azure);
   opacity: 0;
+  transform: translateX(-6px);
   transition:
     opacity var(--dur-mid) var(--ease-out-expo),
     transform var(--dur-mid) var(--ease-out-expo);
@@ -129,11 +211,22 @@
 .channel:hover .channelCue,
 .channel:focus-visible .channelCue {
   opacity: 1;
-  transform: translateY(-50%) translateX(0);
+  transform: translateX(0);
+}
+
+@media (max-width: 860px) {
+  .grid {
+    grid-template-columns: 1fr;
+    gap: var(--s-xl);
+  }
+  .aside {
+    position: static;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
   .channel,
+  .channelIcon,
   .channelCue {
     transition: none;
   }
@@ -143,6 +236,6 @@
   }
   .channelCue {
     opacity: 1;
-    transform: translateY(-50%);
+    transform: none;
   }
 }
