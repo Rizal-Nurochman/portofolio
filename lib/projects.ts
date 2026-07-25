@@ -47,41 +47,19 @@ export const projects: Project[] = [
     accent: "gold",
     liveUrl: "https://matchnbuild.vercel.app",
     repoUrl: "https://github.com/Rizal-Nurochman/matchnbuild-be",
-    preview: "",
+    preview: "/MnB.png",
     featured: true,
   },
   {
-    slug: "altimeter",
-    title: "Altimeter",
-    summary:
-      "A lightweight uptime and latency monitor with a public status page and a clean metrics query layer.",
-    role: "Probing engine, time-series storage, status API.",
-    stack: ["Go", "Gin", "SQLite"],
+    slug: "dodolan",
+    title: "Dodolan",
+    summary:"",
+    role: "Fullstack",
+    stack: ["Go", "Gin", "NextJS", "PostgreSQL"],
     accent: "azure",
-    liveUrl: "#",
-    repoUrl: "#",
-  },
-  {
-    slug: "stratus-shorten",
-    title: "Stratus Shorten",
-    summary:
-      "A URL shortener with per-link analytics, custom slugs, and a cache-first read path built for scale.",
-    role: "Full service design, caching strategy, analytics rollups.",
-    stack: ["Go", "Gin", "Redis"],
-    accent: "gold",
-    liveUrl: "#",
-    repoUrl: "#",
-  },
-  {
-    slug: "cirrus-chat",
-    title: "Cirrus Chat",
-    summary:
-      "A real-time chat backend over WebSockets with presence, typing indicators, and message history pagination.",
-    role: "WebSocket hub, presence system, message persistence.",
-    stack: ["Go", "Gin", "WebSocket", "PostgreSQL"],
-    accent: "sky",
-    liveUrl: "#",
-    repoUrl: "#",
+    liveUrl: "https://dodolan.vercel.app",
+    repoUrl: "https://github.com/Rizal-Nurochman/Dodolan",
+    preview: "/Dodolan.png"
   },
 ];
 
