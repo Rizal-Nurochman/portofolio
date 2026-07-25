@@ -77,19 +77,11 @@ export default function ProjectDetailPage({
         <div className={styles.grid}>
           <Reveal className={styles.prose}>
             <h2 className={styles.h2}>What it is</h2>
-            <p>{project.summary}</p>
-            <p>
-              This is placeholder detail. Replace it with the real story: the
-              problem, the constraints, the interesting decisions, and how it
-              held up in production.
-            </p>
-
-            <h2 className={styles.h2}>What I built</h2>
-            <p>
-              {project.role} A short walk through the architecture goes here:
-              the API surface, the data model, and the parts you&apos;d want a
-              reviewer to notice.
-            </p>
+            {project.description ? (
+              project.description.map((p, i) => <p key={i}>{p}</p>)
+            ) : (
+              <p>{project.summary}</p>
+            )}
           </Reveal>
 
           <Reveal className={styles.aside} delay={80}>
