@@ -1,11 +1,3 @@
-/**
- * Placeholder project data. Shape mirrors what real projects will carry so the
- * UI is built against final data, not throwaway strings. Swap the contents for
- * real work later; the `slug` becomes the /projects/[slug] route.
- *
- * `preview` points at a screenshot in /public/projects. Until real shots exist,
- * a gradient placeholder is rendered from the accent/sky colors (see ProjectCard).
- */
 export interface Project {
   slug: string;
   title: string;
@@ -23,39 +15,39 @@ export interface Project {
 
 export const projects: Project[] = [
   {
-    slug: "cloudpost-api",
-    title: "CloudPost API",
-    summary:
-      "A REST API for a social posting platform: auth, rate limiting, and media uploads served behind a clean, versioned surface.",
-    role: "Designed and built the full backend and data model.",
-    stack: ["Go", "Gin", "PostgreSQL", "Redis"],
+    slug: "revolusi-edukasi",
+    title: "Revolusi Edukasi",
+    summary: "",
+    role: "Backend",
+    stack: ["Go", "GIN", "Vue", "PostgreSQL"],
+    preview: "/Reduka.png",
+    liveUrl: "https://revolusi-edukasi.com",
+    repoUrl: "https://github.com/redukasquad/be-reduka",
     accent: "azure",
-    liveUrl: "#",
-    repoUrl: "#",
+    featured: true
+  },
+  {
+    slug: "literasiku-library",
+    title: "Literasiku",
+    summary: "",
+    role: "Backend",
+    stack: ["Go", "Gin", "PostgreSQL", "Vue", "Docker"],
+    accent: "azure",
+    liveUrl: "https://literasiku-library.vercel.app",
+    repoUrl: "https://github.com/Rizal-Nurochman/literasiku",
+    preview: "/Literasiku.png",
     featured: true,
   },
   {
-    slug: "skyledger",
-    title: "SkyLedger",
-    summary:
-      "A double-entry bookkeeping service with idempotent transactions and a reporting engine that stays correct under concurrency.",
-    role: "Backend architecture, transaction integrity, reporting API.",
-    stack: ["Go", "Gin", "PostgreSQL"],
+    slug: "match-and-build",
+    title: "Match and Build",
+    summary: "",
+    role: "Backend and Machine Learning Engineer",
+    stack: ["Go", "Gin", "PostgreSQL", "Python"],
     accent: "gold",
-    liveUrl: "#",
-    repoUrl: "#",
-    featured: true,
-  },
-  {
-    slug: "nimbus-notify",
-    title: "Nimbus Notify",
-    summary:
-      "A fan-out notification service that batches, dedupes, and delivers across email, push, and webhooks with retry semantics.",
-    role: "Event pipeline, delivery workers, retry and backoff design.",
-    stack: ["Go", "Gin", "RabbitMQ"],
-    accent: "sky",
-    liveUrl: "#",
-    repoUrl: "#",
+    liveUrl: "https://matchnbuild.vercel.app",
+    repoUrl: "https://github.com/Rizal-Nurochman/matchnbuild-be",
+    preview: "",
     featured: true,
   },
   {
