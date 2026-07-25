@@ -15,34 +15,58 @@ type Entry = {
   when: string;
   title: string;
   place: string;
-  kind: "education" | "organisation";
+  kind: "education" | "organization";
   detail: string;
 };
 
 const timeline: Entry[] = [
-  {
-    when: "2024 - now",
-    title: "Backend Developer",
-    place: "Freelance / personal projects",
-    kind: "organisation",
-    detail:
-      "Building web services and APIs in Go and Gin - the projects you see here.",
-  },
-  {
-    when: "2023",
-    title: "Core Team, Tech Division",
-    place: "Campus student organisation",
-    kind: "organisation",
-    detail:
-      "Led a small team building internal tooling; learned to ship with other people.",
-  },
-  {
-    when: "2021 - 2025",
-    title: "Informatics / Computer Science",
-    place: "Your University",
+    {
+    when: "2024 - 2027",
+    title: "Information Systems",
+    place: "Airlangga University",
     kind: "education",
     detail:
-      "Where the systems thinking started. Placeholder - add your real programme and focus.",
+      "Where the systems thinking started — from data modelling to building things people actually use.",
+  },
+  {
+    when: "2025-now",
+    title: "Head of Education Technology & Development Departement",
+    place: "Revolusi Edukasi",
+    kind: "organization",
+    detail:
+      "Leading the tech behind an SNBT prep platform, shipping the Go and Gin services that power its tryouts, courses, and live classes.",
+  },
+  {
+    when: "2025",
+    title: "Staff of IT Development",
+    place: "Society of Renewable Energy UNAIR",
+    kind: "organization",
+    detail:
+      "Built and maintained the organisation's web presence with Laravel, keeping its programmes online and up to date.",
+  },
+  {
+    when: "2025",
+    title: "Expert Staff of Web Development",
+    place: "Information System Airlangga Competition (ISAC)",
+    kind: "organization",
+    detail:
+      "Built the web platform behind the competition and olympiad — registration, scoring, and the pages that kept participants in sync.",
+  },
+  {
+    when: "2026",
+    title: "Backend Manager",
+    place: "TEDX UNAIR",
+    kind: "organization",
+    detail:
+      "Leading the backend for the event's site in Go and Gin: the APIs behind ticketing, speakers, and the day-of experience.",
+  },
+  {
+    when: "2026",
+    title: "Staff of Medinfo BEM UNAIR",
+    place: "BEM UNAIR",
+    kind: "organization",
+    detail:
+      "Building web tools for the student executive board in Go and Gin, supporting its media and information work.",
   },
 ];
 
