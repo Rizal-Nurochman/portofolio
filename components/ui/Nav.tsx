@@ -36,7 +36,7 @@ export default function Nav() {
         <Link href="/" className={styles.brand}>
           {/* Name placeholder - swap for real name/logo */}
           <span className={styles.mark} aria-hidden="true" />
-          Your Name
+          Nurochman R.
         </Link>
 
         <nav aria-label="Primary" className={styles.desktop}>

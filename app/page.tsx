@@ -28,7 +28,7 @@ export default function HomePage() {
           <Reveal className={styles.heroInner} y={16}>
             <p className={styles.kicker}>Backend developer · Go &amp; Gin</p>
             <h1 id="hero-title" className={styles.title}>
-              Rizal Nurochman
+              Mohamad Rizal Nurochman
             </h1>
             <p className={styles.lead}>
               I build reliable web services and APIs, the kind of thing you
