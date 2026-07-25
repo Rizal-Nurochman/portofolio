@@ -80,6 +80,29 @@
   transform: scaleX(1);
 }
 
+/* Icon-only links (GitHub/LinkedIn on desktop). No underline, hover tints. */
+.iconLink {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border-radius: var(--r-full);
+  color: var(--muted);
+  transition:
+    color var(--dur-fast) var(--ease-out-quart),
+    background var(--dur-fast) var(--ease-out-quart);
+}
+.iconLink::after {
+  display: none;
+}
+.iconLink:hover,
+.iconLink:focus-visible {
+  color: var(--azure-deep);
+  background: var(--cloud-soft);
+}
+
 /* --- mobile toggle --- */
 .toggle {
   display: none;
@@ -142,6 +165,9 @@
 }
 
 .mobileLink {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s-xs);
   padding: 14px 12px;
   border-radius: var(--r-md);
   font-size: 1.0625rem;

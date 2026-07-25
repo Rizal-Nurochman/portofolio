@@ -2,15 +2,22 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import BrandIcon from "./BrandIcon";
 import styles from "./Nav.module.css";
 
-const LINKS = [
+type NavLink = {
+  href: string;
+  label: string;
+  icon?: "github" | "linkedin" | "email";
+};
+
+const LINKS: NavLink[] = [
   { href: "/projects", label: "Projects" },
   { href: "/about", label: "About" },
   { href: "/articles", label: "Articles" },
   { href: "/contact", label: "Contact" },
-  { href: "https://github.com/Rizal-Nurochman", label: "GitHub", icon: "github" as const },
-  { href: "https://www.linkedin.com/in/mohamad-rizal-nurochman", label: "LinkedIn", icon: "linkedin" as const }
+  { href: "https://github.com/Rizal-Nurochman", label: "GitHub", icon: "github" },
+  { href: "https://www.linkedin.com/in/mohamad-rizal-nurochman", label: "LinkedIn", icon: "linkedin" },
 ];
 
 /**
@@ -42,11 +49,25 @@ export default function Nav() {
         </Link>
 
         <nav aria-label="Primary" className={styles.desktop}>
-          {LINKS.map((l) => (
-            <Link key={l.href} href={l.href} className={styles.link}>
-              {l.label}
-            </Link>
-          ))}
+          {LINKS.map((l) => {
+            const external = l.href.startsWith("http");
+            return (
+              <Link
+                key={l.href}
+                href={l.href}
+                className={`${styles.link} ${l.icon ? styles.iconLink : ""}`}
+                target={external ? "_blank" : undefined}
+                rel={external ? "noreferrer" : undefined}
+                aria-label={l.icon ? l.label : undefined}
+              >
+                {l.icon ? (
+                  <BrandIcon name={l.icon} size={18} />
+                ) : (
+                  l.label
+                )}
+              </Link>
+            );
+          })}
         </nav>
 
         <button
@@ -70,16 +91,22 @@ export default function Nav() {
         className={`${styles.mobile} ${open ? styles.mobileOpen : ""}`}
         hidden={!open}
       >
-        {LINKS.map((l) => (
-          <Link
-            key={l.href}
-            href={l.href}
-            className={styles.mobileLink}
-            onClick={() => setOpen(false)}
-          >
-            {l.label}
-          </Link>
-        ))}
+        {LINKS.map((l) => {
+          const external = l.href.startsWith("http");
+          return (
+            <Link
+              key={l.href}
+              href={l.href}
+              className={styles.mobileLink}
+              onClick={() => setOpen(false)}
+              target={external ? "_blank" : undefined}
+              rel={external ? "noreferrer" : undefined}
+            >
+              {l.icon && <BrandIcon name={l.icon} size={18} />}
+              {l.label}
+            </Link>
+          );
+        })}
       </nav>
     </header>
   );
