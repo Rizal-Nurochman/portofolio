@@ -4,7 +4,7 @@ import Reveal from "@/components/ui/Reveal";
 import styles from "./about.module.css";
 
 export const metadata: Metadata = {
-  title: "About · Perjalanan Awan",
+  title: "Rizal Nurochman | About",
   description:
     "The climb so far: education, organisations, and how I work as a Go developer.",
 };
@@ -51,7 +51,7 @@ export default function AboutPage() {
     <PageShell>
       <div className={styles.wrap}>
         <Reveal className={styles.intro} y={16}>
-          <p className={styles.altitude}>Altitude · About</p>
+          <p className={styles.altitude}>About</p>
           <h1 className={styles.title}>The climb so far</h1>
           <p className={styles.lead}>
             I&apos;m a developer who likes systems that hold up under pressure:

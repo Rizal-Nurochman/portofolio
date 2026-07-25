@@ -7,7 +7,7 @@ import { projects } from "@/lib/projects";
 import styles from "./projects.module.css";
 
 export const metadata: Metadata = {
-  title: "Projects · Perjalanan Awan",
+  title: "Rizal Nurochman | Projects",
   description: "Web services and APIs built with Go and Gin.",
 };
 

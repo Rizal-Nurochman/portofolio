@@ -7,7 +7,7 @@ import GopherSVG from "@/components/gopher/GopherSVG";
 import styles from "./contact.module.css";
 
 export const metadata: Metadata = {
-  title: "Contact · Perjalanan Awan",
+  title: "Rizal Nurochman | Contact",
   description:
     "Reach out by email or social. The primary way to get in touch about work.",
 };

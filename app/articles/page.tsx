@@ -8,7 +8,7 @@ import GopherSVG from "@/components/gopher/GopherSVG";
 import styles from "./articles.module.css";
 
 export const metadata: Metadata = {
-  title: "Articles · Perjalanan Awan",
+  title: "Rizal Nurochman | Articles",
   description: "Writing is on the way. The Gopher is keeping the seat warm.",
 };
 
@@ -29,7 +29,7 @@ export default function ArticlesPage() {
             <span className={styles.cloudSeat} aria-hidden="true" />
             <GopherSVG width={140} pose="waiting" className={styles.gopher} />
           </div>
-          <p className={styles.altitude}>Altitude · Articles</p>
+          <p className={styles.altitude}>Articles</p>
           <h1 className={styles.title}>Coming soon</h1>
           <p className={styles.text}>
             I&apos;m writing up a few things: notes on Go, building APIs with
