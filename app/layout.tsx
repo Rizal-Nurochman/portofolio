@@ -9,6 +9,7 @@ import CloudIntro from "@/components/intro/CloudIntro";
 import Sky from "@/components/sky/Sky";
 import GopherCompanion from "@/components/gopher/GopherCompanion";
 import Nav from "@/components/ui/Nav";
+import Footer from "@/components/ui/Footer";
 
 const fraunces = Fraunces({
   subsets: ["latin"],
