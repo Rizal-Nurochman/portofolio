@@ -9,6 +9,7 @@
 }
 
 html {
+  min-width: 320px;
   min-height: 100%;
   color-scheme: light;
   background: var(--sky-low);
@@ -40,17 +41,21 @@ body {
 .site-shell {
   position: relative;
   z-index: var(--z-content);
+  width: 100%;
   min-height: 100vh;
   min-height: 100dvh;
-  isolation: isolate;
+  background: transparent;
 }
 
-main {
+.site-main {
   position: relative;
-  z-index: var(--z-content);
-  min-height: 100%;
+  width: 100%;
+  min-height: 100vh;
+  min-height: 100dvh;
+  background: transparent;
 }
 
+main,
 header,
 footer,
 section,
@@ -58,6 +63,12 @@ article,
 aside,
 nav {
   position: relative;
+}
+
+main,
+section,
+article {
+  background-color: transparent;
 }
 
 img,
@@ -199,8 +210,10 @@ pre {
 
 .section {
   position: relative;
-  z-index: var(--z-content);
+  z-index: 1;
+  width: 100%;
   padding-block: var(--s-3xl);
+  background: transparent;
 }
 
 .surface {
