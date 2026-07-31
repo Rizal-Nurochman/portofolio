@@ -51,9 +51,6 @@ export default function RootLayout({
       className={`${fraunces.variable} ${instrumentSans.variable} ${jetbrainsMono.variable}`}
     >
       <head>
-        <Sky />
-        <GopherCompanion />
-        <Nav />
         <script
           dangerouslySetInnerHTML={{
             __html:
@@ -63,6 +60,7 @@ export default function RootLayout({
       </head>
 
       <body>
+        <Nav />
         <Sky />
         <CloudIntro />
 
