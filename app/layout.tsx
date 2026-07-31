@@ -1,10 +1,14 @@
 import type { Metadata } from "next";
-import { Fraunces, Instrument_Sans, JetBrains_Mono } from "next/font/google";
+import {
+  Fraunces,
+  Instrument_Sans,
+  JetBrains_Mono,
+} from "next/font/google";
 import "./globals.css";
 import CloudIntro from "@/components/intro/CloudIntro";
-import SkyCanvas from "@/components/sky/SkyCanvas";
-import GopherCompanion from "@/components/gopher/GopherCompanion";
 import Sky from "@/components/sky/Sky";
+import GopherCompanion from "@/components/gopher/GopherCompanion";
+import Nav from "@/components/ui/Nav";
 
 const fraunces = Fraunces({
   subsets: ["latin"],
@@ -26,36 +30,47 @@ const jetbrainsMono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Rizal | Mohamad Rizal Nurochman - Backend Engineer",
+  title: {
+    default: "Rizal | Backend Engineer",
+    template: "%s | Rizal",
+  },
   description:
-    "Portofolio developer: proyek web dengan Go & Gin yang dibawakan lewat perjalanan menaiki awan.",
+    "Portofolio Mohamad Rizal Nurochman, Backend Engineer yang membangun aplikasi web menggunakan Go, Gin, dan teknologi modern.",
 };
 
 export default function RootLayout({
   children,
-}: {
+}: Readonly<{
   children: React.ReactNode;
-}) {
+}>) {
   return (
     <html
       lang="id"
+      suppressHydrationWarning
       className={`${fraunces.variable} ${instrumentSans.variable} ${jetbrainsMono.variable}`}
     >
       <head>
-        {/*
-         * Mark JS as available before first paint. Reveal's hidden-start state
-         * is gated on .js so no-JS / headless renders always ship visible.
-         */}
-         <Sky />
+        <Sky />
+        <GopherCompanion />
+        <Nav />
         <script
           dangerouslySetInnerHTML={{
-            __html: `document.documentElement.classList.add('js')`,
+            __html:
+              "document.documentElement.classList.add('js');",
           }}
         />
       </head>
+
       <body>
+        <Sky />
         <CloudIntro />
-        {children}
+
+        <div className="site-shell">
+          {children}
+        </div>
+
+        <GopherCompanion />
+         <Footer />
       </body>
     </html>
   );

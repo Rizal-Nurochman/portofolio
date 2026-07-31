@@ -1,7 +1,4 @@
 import Link from "next/link";
-import SkyCanvas from "@/components/sky/SkyCanvas";
-import GopherCompanion from "@/components/gopher/GopherCompanion";
-import Nav from "@/components/ui/Nav";
 import Footer from "@/components/ui/Footer";
 import Reveal from "@/components/ui/Reveal";
 import { Button } from "@/components/ui/Button";
@@ -18,10 +15,6 @@ import styles from "./page.module.css";
 export default function HomePage() {
   return (
     <>
-      <SkyCanvas />
-      <GopherCompanion />
-      <Nav />
-
       <main id="main" className={styles.main}>
         {/* Hero */}
         <section className={styles.hero} aria-labelledby="hero-title">

@@ -16,7 +16,7 @@ export default function PageShell({ children }: { children: ReactNode }) {
       <GopherCompanion />
       <Nav />
       <main id="main">{children}</main>
-      <Footer />
+     
     </>
   );
 }
