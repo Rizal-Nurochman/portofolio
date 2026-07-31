@@ -1,142 +1,316 @@
 "use client";
 
 import { useMemo, useRef } from "react";
-import { Canvas, useFrame, useThree } from "@react-three/fiber";
+import { Canvas, useFrame } from "@react-three/fiber";
 import * as THREE from "three";
 
-/**
- * Raymarched volumetric-cloud intro. A single full-screen quad runs a fragment
- * shader that marches fbm noise: a virtual camera flies FORWARD through a cloud
- * bank the whole time (driven by uTime, so it never looks static). When `parting`
- * flips true, uParting eases 0→1 - the fly speed jumps and the cloud coverage
- * clears, so you punch through into open sky. That + the overlay fade is the
- * reveal.
- *
- * One fullscreen shader (not dozens of billboards) and a capped dpr keep it cheap;
- * loaded via next/dynamic (ssr:false) so three.js stays out of the base bundle and
- * away from reduced-motion / no-WebGL visitors.
- */
-
-const vert = /* glsl */ `
+const vertexShader = `
   varying vec2 vUv;
+
   void main() {
     vUv = uv;
-    // planeGeometry(2,2) already spans clip space; ignore the camera entirely
     gl_Position = vec4(position.xy, 0.0, 1.0);
   }
 `;
 
-const frag = /* glsl */ `
-  precision highp float;
+const fragmentShader = `
+  precision mediump float;
+
   varying vec2 vUv;
+
   uniform float uTime;
-  uniform float uParting;
+  uniform float uReveal;
+  uniform float uProgress;
   uniform float uAspect;
 
-  float hash(vec3 p) {
-    p = fract(p * 0.3183099 + 0.1);
-    p *= 17.0;
-    return fract(p.x * p.y * p.z * (p.x + p.y + p.z));
+  float hash21(vec2 p) {
+    p = fract(p * vec2(123.34, 456.21));
+    p += dot(p, p + 45.32);
+
+    return fract(p.x * p.y);
   }
-  float noise(vec3 x) {
-    vec3 i = floor(x);
-    vec3 f = fract(x);
+
+  float noise(vec2 p) {
+    vec2 i = floor(p);
+    vec2 f = fract(p);
+
     f = f * f * (3.0 - 2.0 * f);
+
+    float a = hash21(i);
+    float b = hash21(i + vec2(1.0, 0.0));
+    float c = hash21(i + vec2(0.0, 1.0));
+    float d = hash21(i + vec2(1.0, 1.0));
+
     return mix(
-      mix(mix(hash(i + vec3(0,0,0)), hash(i + vec3(1,0,0)), f.x),
-          mix(hash(i + vec3(0,1,0)), hash(i + vec3(1,1,0)), f.x), f.y),
-      mix(mix(hash(i + vec3(0,0,1)), hash(i + vec3(1,0,1)), f.x),
-          mix(hash(i + vec3(0,1,1)), hash(i + vec3(1,1,1)), f.x), f.y), f.z);
+      mix(a, b, f.x),
+      mix(c, d, f.x),
+      f.y
+    );
   }
-  float fbm(vec3 p) {
-    float v = 0.0, a = 0.5;
-    for (int i = 0; i < 4; i++) { v += a * noise(p); p *= 2.02; a *= 0.5; }
-    return v;
+
+  float fbm(vec2 p) {
+    float value = 0.0;
+    float amplitude = 0.5;
+
+    mat2 rotation = mat2(
+      0.80,
+      -0.60,
+      0.60,
+      0.80
+    );
+
+    for (int i = 0; i < 4; i++) {
+      value += amplitude * noise(p);
+      p = rotation * p * 2.03 + 7.17;
+      amplitude *= 0.5;
+    }
+
+    return value;
   }
 
   void main() {
-    vec2 uv = (vUv - 0.5);
-    uv.x *= uAspect;
+    vec2 p = vUv * 2.0 - 1.0;
 
-    // sky it clears into (sRGB approx of --sky tokens)
-    vec3 skyTop = vec3(0.42, 0.66, 0.90);
-    vec3 skyBot = vec3(0.76, 0.87, 0.96);
-    vec3 sky = mix(skyBot, skyTop, clamp(uv.y * 0.6 + 0.5, 0.0, 1.0));
+    p.x *= uAspect;
 
-    // virtual camera: constant forward creep + a big burst on parting
-    float fly = uTime * 1.1 + uParting * uParting * 16.0;
-    vec3 ro = vec3(sin(uTime * 0.15) * 0.3, cos(uTime * 0.12) * 0.2, -fly);
-    vec3 rd = normalize(vec3(uv, -1.0));
+    float reveal = smoothstep(0.0, 1.0, uReveal);
+    float radius = length(p * vec2(0.82, 1.0));
+    float time = uTime * 0.055;
 
-    // clouds thin out as we break through
-    float coverage = mix(0.52, 0.02, uParting);
+    vec2 direction = normalize(p + vec2(0.0001));
+    vec2 flow = p * (1.08 + reveal * 0.24);
 
-    vec3 col = sky;
-    float alpha = 0.0;
-    float t = 0.6;
-    for (int i = 0; i < 34; i++) {
-      vec3 p = ro + rd * t;
-      float d = fbm(p * 0.45) - (1.0 - coverage);
-      if (d > 0.0) {
-        float dens = clamp(d * 1.6, 0.0, 1.0);
-        vec3 c = mix(vec3(1.0), vec3(0.80, 0.88, 0.98), dens * 0.6);
-        float a = dens * 0.42 * (1.0 - alpha);
-        col = mix(col, c, a);
-        alpha += a;
-      }
-      t += 0.32;
-      if (alpha > 0.97) break;
+    flow += direction * reveal * 0.16;
+
+    vec3 skyTop = vec3(0.16, 0.34, 0.62);
+    vec3 skyMiddle = vec3(0.34, 0.61, 0.88);
+    vec3 skyBottom = vec3(0.75, 0.88, 0.98);
+
+    float vertical = clamp(vUv.y, 0.0, 1.0);
+
+    vec3 color = mix(
+      skyBottom,
+      skyMiddle,
+      smoothstep(0.0, 0.56, vertical)
+    );
+
+    color = mix(
+      color,
+      skyTop,
+      smoothstep(0.56, 1.0, vertical)
+    );
+
+    float cloud = 0.0;
+
+    for (int i = 0; i < 5; i++) {
+      float layer = float(i);
+
+      vec2 q = flow * (1.0 + layer * 0.27);
+
+      q += vec2(
+        time * (0.62 + layer * 0.11),
+        -time * (0.24 + layer * 0.055)
+      );
+
+      q += vec2(
+        layer * 4.13,
+        -layer * 3.71
+      );
+
+      float field = fbm(q * 1.15);
+      float density = smoothstep(0.49, 0.79, field);
+      float edge = smoothstep(
+        0.18,
+        1.14,
+        radius + layer * 0.035
+      );
+
+      cloud +=
+        density *
+        edge *
+        (0.235 - layer * 0.027);
     }
-    gl_FragColor = vec4(col, 1.0);
+
+    cloud = clamp(cloud, 0.0, 1.0);
+    cloud *= 1.0 - reveal * 0.9;
+
+    vec3 cloudShadow = vec3(0.63, 0.76, 0.91);
+    vec3 cloudLight = vec3(0.97, 0.99, 1.0);
+
+    vec3 cloudColor = mix(
+      cloudShadow,
+      cloudLight,
+      smoothstep(-0.65, 0.8, p.y)
+    );
+
+    color = mix(
+      color,
+      cloudColor,
+      cloud * 0.9
+    );
+
+    float centerGlow = exp(
+      -3.8 * length(p - vec2(-0.14, 0.04))
+    );
+
+    float horizonGlow = exp(
+      -18.0 * abs(p.y + 0.28)
+    );
+
+    float signalRing = exp(
+      -72.0 *
+      abs(radius - (0.36 + uProgress * 0.055))
+    );
+
+    float vignette = smoothstep(
+      1.45,
+      0.22,
+      radius
+    );
+
+    color +=
+      vec3(0.20, 0.47, 0.92) *
+      centerGlow *
+      (0.16 + uProgress * 0.08);
+
+    color +=
+      vec3(0.48, 0.76, 1.0) *
+      horizonGlow *
+      0.055;
+
+    color +=
+      vec3(0.38, 0.74, 1.0) *
+      signalRing *
+      0.055 *
+      (1.0 - reveal);
+
+    color = mix(
+      color * 0.78,
+      color,
+      vignette
+    );
+
+    color = mix(
+      color,
+      vec3(0.78, 0.90, 1.0),
+      reveal * 0.22
+    );
+
+    float grain =
+      (
+        hash21(
+          gl_FragCoord.xy +
+          floor(uTime * 12.0) * 17.0
+        ) -
+        0.5
+      ) *
+      0.016;
+
+    color += grain;
+
+    gl_FragColor = vec4(color, 1.0);
   }
 `;
 
-function CloudPlane({ parting }: { parting: boolean }) {
-  const { size, viewport } = useThree();
-  const mat = useRef<THREE.ShaderMaterial>(null!);
+type CloudPlaneProps = {
+  progress: number;
+  revealing: boolean;
+};
+
+function CloudPlane({
+  progress,
+  revealing,
+}: CloudPlaneProps) {
+  const materialRef = useRef<THREE.ShaderMaterial>(null);
 
   const uniforms = useMemo(
     () => ({
       uTime: { value: 0 },
-      uParting: { value: 0 },
-      uAspect: { value: size.width / size.height },
+      uReveal: { value: 0 },
+      uProgress: { value: 0 },
+      uAspect: { value: 1 },
     }),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
     []
   );
 
-  useFrame((_, delta) => {
-    const u = mat.current.uniforms;
-    u.uTime.value += delta;
-    u.uAspect.value = viewport.aspect;
-    // ease uParting toward the target so the burst ramps, not snaps
-    const target = parting ? 1 : 0;
-    u.uParting.value += (target - u.uParting.value) * Math.min(delta * 1.6, 1);
+  useFrame((state, delta) => {
+    const material = materialRef.current;
+
+    if (!material) return;
+
+    const step = Math.min(delta, 0.05);
+    const revealTarget = revealing ? 1 : 0;
+    const revealBlend = 1 - Math.exp(-step * 4.6);
+    const progressBlend = 1 - Math.exp(-step * 6.5);
+
+    material.uniforms.uTime.value += step;
+
+    material.uniforms.uReveal.value +=
+      (
+        revealTarget -
+        material.uniforms.uReveal.value
+      ) *
+      revealBlend;
+
+    material.uniforms.uProgress.value +=
+      (
+        progress -
+        material.uniforms.uProgress.value
+      ) *
+      progressBlend;
+
+    material.uniforms.uAspect.value =
+      state.size.width / state.size.height;
   });
 
   return (
     <mesh frustumCulled={false}>
       <planeGeometry args={[2, 2]} />
+
       <shaderMaterial
-        ref={mat}
-        vertexShader={vert}
-        fragmentShader={frag}
+        ref={materialRef}
+        vertexShader={vertexShader}
+        fragmentShader={fragmentShader}
         uniforms={uniforms}
         depthTest={false}
         depthWrite={false}
+        toneMapped={false}
       />
     </mesh>
   );
 }
 
-export default function CloudScene({ parting }: { parting: boolean }) {
+type CloudSceneProps = {
+  progress: number;
+  revealing: boolean;
+};
+
+export default function CloudScene({
+  progress,
+  revealing,
+}: CloudSceneProps) {
   return (
     <Canvas
-      dpr={[1, 1.5]}
-      gl={{ antialias: false, alpha: false }}
-      style={{ position: "absolute", inset: 0 }}
+      dpr={[0.75, 1.2]}
+      flat
+      frameloop="always"
+      gl={{
+        alpha: false,
+        antialias: false,
+        depth: false,
+        stencil: false,
+        powerPreference: "high-performance",
+        preserveDrawingBuffer: false,
+      }}
+      style={{
+        position: "absolute",
+        inset: 0,
+      }}
     >
-      <CloudPlane parting={parting} />
+      <CloudPlane
+        progress={progress}
+        revealing={revealing}
+      />
     </Canvas>
   );
 }

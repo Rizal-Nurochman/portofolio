@@ -1,197 +1,374 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { Component, type ReactNode, useEffect, useRef, useState } from "react";
 import dynamic from "next/dynamic";
 import styles from "./CloudIntro.module.css";
 
-// three.js only loads when we actually mount the 3D scene (never on the server,
-// never for reduced-motion / no-WebGL visitors) so it stays out of the base bundle.
-const CloudScene = dynamic(() => import("./CloudScene"), { ssr: false });
+const CloudScene = dynamic(() => import("./CloudScene"), {
+  ssr: false,
+  loading: () => null,
+});
 
-// Cheap one-shot WebGL probe. If the context can't be made, fall back to SVG.
-function hasWebGL(): boolean {
+type Phase = "loading" | "revealing" | "done";
+
+type NetworkInformationLike = {
+  saveData?: boolean;
+  effectiveType?: string;
+};
+
+type NavigatorWithHints = Navigator & {
+  connection?: NetworkInformationLike;
+  deviceMemory?: number;
+};
+
+type SceneBoundaryProps = {
+  children: ReactNode;
+  onFailure: () => void;
+};
+
+type SceneBoundaryState = {
+  failed: boolean;
+};
+
+const INTRO_KEY = "portfolio-entry:v3";
+
+class SceneBoundary extends Component<SceneBoundaryProps, SceneBoundaryState> {
+  state: SceneBoundaryState = { failed: false };
+
+  static getDerivedStateFromError(): SceneBoundaryState {
+    return { failed: true };
+  }
+
+  componentDidCatch() {
+    this.props.onFailure();
+  }
+
+  render() {
+    return this.state.failed ? null : this.props.children;
+  }
+}
+
+function readIntroState(): boolean {
   try {
-    const c = document.createElement("canvas");
-    return !!(c.getContext("webgl") || c.getContext("experimental-webgl"));
+    return sessionStorage.getItem(INTRO_KEY) === "1";
   } catch {
     return false;
   }
 }
 
-/**
- * First-visit intro. The camera sits inside a volumetric cloud bank (three.js)
- * with a progress counter filling 1→100 underneath. At 100 the camera rushes
- * FORWARD through the clouds and the fog clears - you break through into open
- * sky, revealing the site. Reduced-motion / no-WebGL visitors get a lightweight
- * SVG cloud curtain that parts instead, with no three.js loaded at all.
- *
- * The counter is a requestAnimationFrame timer (not CSS keyframes) so the global
- * prefers-reduced-motion freeze can't stall it. Shown once per browser session
- * (sessionStorage); scroll is locked until it finishes.
- */
+function persistIntroState(): void {
+  try {
+    sessionStorage.setItem(INTRO_KEY, "1");
+  } catch {
+    return;
+  }
+}
+
+function hasWebGL(): boolean {
+  try {
+    const canvas = document.createElement("canvas");
+
+    const options: WebGLContextAttributes = {
+      alpha: false,
+      antialias: false,
+      depth: false,
+      stencil: false,
+      failIfMajorPerformanceCaveat: true,
+      powerPreference: "high-performance",
+    };
+
+    const context =
+      canvas.getContext("webgl2", options) ??
+      canvas.getContext("webgl", options) ??
+      (canvas.getContext(
+        "experimental-webgl",
+        options
+      ) as WebGLRenderingContext | null);
+
+    if (!context) return false;
+
+    context.getExtension("WEBGL_lose_context")?.loseContext();
+
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+function shouldUseWebGL(reducedMotion: boolean): boolean {
+  if (reducedMotion) return false;
+
+  const nav = navigator as NavigatorWithHints;
+  const effectiveType = nav.connection?.effectiveType;
+
+  if (nav.connection?.saveData) return false;
+  if (effectiveType === "slow-2g" || effectiveType === "2g") return false;
+  if ((nav.deviceMemory ?? 4) < 4) return false;
+  if ((nav.hardwareConcurrency ?? 4) < 4) return false;
+
+  return hasWebGL();
+}
+
+function getStatus(progress: number): string {
+  if (progress < 18) return "CALIBRATING ATMOSPHERE";
+  if (progress < 42) return "ALIGNING INTERFACE";
+  if (progress < 68) return "CONNECTING SYSTEMS";
+  if (progress < 92) return "ASSEMBLING EXPERIENCE";
+
+  return "SYSTEM READY";
+}
+
 export default function CloudIntro() {
-  const [phase, setPhase] = useState<"idle" | "counting" | "parting" | "done">(
-    "idle"
-  );
-  const [count, setCount] = useState(0);
-  const [use3d, setUse3d] = useState(false);
-  const rafRef = useRef(0);
+  const [phase, setPhase] = useState<Phase>("loading");
+  const [progress, setProgress] = useState(0);
+  const [useWebGL, setUseWebGL] = useState(false);
+  const frameRef = useRef(0);
 
   useEffect(() => {
-    let seen = false;
-    try {
-      seen = sessionStorage.getItem("cloudIntroSeen") === "1";
-    } catch {
-      seen = false;
-    }
-    if (seen) {
+    if (readIntroState()) {
       setPhase("done");
       return;
     }
 
-    const reduce = window.matchMedia(
+    const reducedMotion = window.matchMedia(
       "(prefers-reduced-motion: reduce)"
     ).matches;
-    const with3d = !reduce && hasWebGL();
-    setUse3d(with3d);
 
-    const prevOverflow = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
+    setUseWebGL(shouldUseWebGL(reducedMotion));
 
-    setPhase("counting");
+    const root = document.documentElement;
+    const body = document.body;
 
-    // deliberately unhurried: ~5s to fill, so 1→100 reads as a real load
-    const COUNT_MS = reduce ? 600 : 5000;
-    const start = performance.now();
+    const previousRootOverflow = root.style.overflow;
+    const previousBodyOverflow = body.style.overflow;
+    const previousTouchAction = body.style.touchAction;
+    const previousBusy = body.getAttribute("aria-busy");
 
-    const tick = (now: number) => {
-      const p = Math.min((now - start) / COUNT_MS, 1);
-      // ease-in-out so it starts gently, moves through the middle, settles at 100
-      const eased =
-        p < 0.5 ? 2 * p * p : 1 - Math.pow(-2 * p + 2, 2) / 2;
-      setCount(Math.round(eased * 100));
-      if (p < 1) {
-        rafRef.current = requestAnimationFrame(tick);
+    root.style.overflow = "hidden";
+    body.style.overflow = "hidden";
+    body.style.touchAction = "none";
+    body.setAttribute("aria-busy", "true");
+
+    let released = false;
+    let cancelled = false;
+    let pageReady = document.readyState === "complete";
+    let fontsReady = document.fonts.status === "loaded";
+    let forcedReady = false;
+    let current = 0;
+    let published = -1;
+    let revealTimer = 0;
+
+    let lastTime = performance.now();
+    const startedAt = lastTime;
+
+    const minDuration = reducedMotion ? 120 : 1500;
+    const maxDuration = reducedMotion ? 360 : 3200;
+    const revealDuration = reducedMotion ? 240 : 1280;
+
+    const release = () => {
+      if (released) return;
+
+      released = true;
+
+      root.style.overflow = previousRootOverflow;
+      body.style.overflow = previousBodyOverflow;
+      body.style.touchAction = previousTouchAction;
+
+      if (previousBusy === null) {
+        body.removeAttribute("aria-busy");
       } else {
-        setPhase("parting");
-        // the break-through: camera flies out (3d) or the SVG halves part
-        const PART_MS = reduce ? 400 : 2200;
-        window.setTimeout(() => {
-          document.body.style.overflow = prevOverflow;
-          try {
-            sessionStorage.setItem("cloudIntroSeen", "1");
-          } catch {
-            /* ignore */
-          }
-          setPhase("done");
-        }, PART_MS);
+        body.setAttribute("aria-busy", previousBusy);
       }
     };
-    rafRef.current = requestAnimationFrame(tick);
+
+    const handleLoad = () => {
+      pageReady = true;
+    };
+
+    if (!pageReady) {
+      window.addEventListener("load", handleLoad, { once: true });
+    }
+
+    void document.fonts.ready
+      .then(() => {
+        fontsReady = true;
+      })
+      .catch(() => {
+        fontsReady = true;
+      });
+
+    const forceTimer = window.setTimeout(() => {
+      forcedReady = true;
+    }, maxDuration);
+
+    const finish = () => {
+      setProgress(100);
+      setPhase("revealing");
+
+      revealTimer = window.setTimeout(() => {
+        if (cancelled) return;
+
+        persistIntroState();
+        release();
+        setPhase("done");
+      }, revealDuration);
+    };
+
+    const tick = (now: number) => {
+      const delta = Math.min(now - lastTime, 64);
+      const elapsed = now - startedAt;
+
+      lastTime = now;
+
+      const stagedTarget = Math.min(
+        92,
+        7 + 88 * (1 - Math.exp(-elapsed / 760))
+      );
+
+      const canComplete =
+        elapsed >= minDuration && ((pageReady && fontsReady) || forcedReady);
+
+      const target = canComplete ? 100 : stagedTarget;
+
+      const response =
+        target === 100
+          ? 1 - Math.exp(-delta / 90)
+          : 1 - Math.exp(-delta / 240);
+
+      current += (target - current) * response;
+
+      const nextValue = Math.min(100, Math.round(current));
+
+      if (nextValue !== published) {
+        published = nextValue;
+        setProgress(nextValue);
+      }
+
+      if (target === 100 && current >= 99.6) {
+        finish();
+        return;
+      }
+
+      frameRef.current = requestAnimationFrame(tick);
+    };
+
+    frameRef.current = requestAnimationFrame(tick);
 
     return () => {
-      cancelAnimationFrame(rafRef.current);
-      document.body.style.overflow = prevOverflow;
+      cancelled = true;
+
+      cancelAnimationFrame(frameRef.current);
+      window.clearTimeout(forceTimer);
+      window.clearTimeout(revealTimer);
+      window.removeEventListener("load", handleLoad);
+
+      release();
     };
   }, []);
 
   if (phase === "done") return null;
 
-  const parting = phase === "parting";
+  const revealing = phase === "revealing";
+  const circumference = 2 * Math.PI * 48;
+  const dashOffset = circumference * (1 - progress / 100);
+  const formattedProgress = progress.toString().padStart(3, "0");
 
   return (
     <div
-      className={`${styles.overlay} ${parting ? styles.parting : ""}`}
-      role="status"
-      aria-live="polite"
-      aria-label={`Loading ${count} percent`}
+      className={`${styles.overlay} ${revealing ? styles.revealing : ""}`}
+      role="progressbar"
+      aria-label="Preparing Misbahul Muttaqin portfolio"
+      aria-valuemin={0}
+      aria-valuemax={100}
+      aria-valuenow={progress}
+      aria-valuetext={`${progress} percent, ${getStatus(progress)}`}
     >
-      {use3d ? (
-        <div className={styles.scene} aria-hidden="true">
-          <CloudScene parting={parting} />
-        </div>
-      ) : (
-        <>
-          {/* fallback: two cloud halves that overlap in the center, then part */}
-          <div className={`${styles.half} ${styles.left}`} aria-hidden="true">
-            <CloudMass side="left" />
-          </div>
-          <div className={`${styles.half} ${styles.right}`} aria-hidden="true">
-            <CloudMass side="right" />
-          </div>
-        </>
-      )}
-
-      {/* counter + progress bar, centered, fading as the clouds part */}
-      <div className={styles.hud} aria-hidden="true">
-        <div className={styles.count}>
-          <span className={styles.num}>{count}</span>
-          <span className={styles.pct}>%</span>
-        </div>
-        <div className={styles.track}>
-          <div
-            className={styles.fill}
-            style={{ transform: `scaleX(${count / 100})` }}
-          />
-        </div>
+      <div className={styles.atmosphere} aria-hidden="true">
+        {useWebGL ? (
+          <SceneBoundary onFailure={() => setUseWebGL(false)}>
+            <CloudScene progress={progress / 100} revealing={revealing} />
+          </SceneBoundary>
+        ) : (
+          <div className={styles.fallbackAtmosphere} />
+        )}
       </div>
+
+      <div className={styles.grid} aria-hidden="true" />
+      <div className={styles.grain} aria-hidden="true" />
+
+      <div className={styles.shell}>
+        <header className={styles.topbar}>
+          <div className={styles.brandLockup}>
+            <span className={styles.liveDot} />
+            <span>MISBAHUL MUTTAQIN</span>
+          </div>
+
+          <span className={styles.edition}>PORTFOLIO / 2026</span>
+        </header>
+
+        <main className={styles.stage}>
+          <div className={styles.signal} aria-hidden="true">
+            <div className={`${styles.orbit} ${styles.orbitOuter}`} />
+            <div className={`${styles.orbit} ${styles.orbitInner}`} />
+
+            <svg className={styles.progressRing} viewBox="0 0 108 108">
+              <circle
+                className={styles.ringTrack}
+                cx="54"
+                cy="54"
+                r="48"
+              />
+
+              <circle
+                className={styles.ringValue}
+                cx="54"
+                cy="54"
+                r="48"
+                strokeDasharray={circumference}
+                strokeDashoffset={dashOffset}
+              />
+            </svg>
+
+            <div className={styles.monogram}>MM</div>
+          </div>
+
+          <div className={styles.copy}>
+            <p className={styles.eyebrow}>
+              FULL-STACK ENGINEER · AGENTIC AI
+            </p>
+
+            <h1 className={styles.title}>
+              <span>Building systems</span>
+              <span>that learn and evolve.</span>
+            </h1>
+          </div>
+        </main>
+
+        <footer className={styles.footer}>
+          <div className={styles.footerMeta}>
+            <span>DIGITAL ECOSYSTEM</span>
+            <span>SURABAYA · INDONESIA</span>
+          </div>
+
+          <div className={styles.progressBlock}>
+            <div className={styles.progressHeader}>
+              <span>{getStatus(progress)}</span>
+              <span>{formattedProgress}%</span>
+            </div>
+
+            <div className={styles.track}>
+              <div
+                className={styles.fill}
+                style={{
+                  transform: `scaleX(${progress / 100})`,
+                }}
+              />
+            </div>
+          </div>
+        </footer>
+      </div>
+
+      <div className={styles.revealEdge} aria-hidden="true" />
     </div>
-  );
-}
-
-/**
- * One half of the covering cloud mass: a set of clean, overlapping white puffs
- * with a soft gradient, extending past the center seam so the two halves meet
- * with no gap. A crisp, rounded cloud edge - not scalloped noise.
- */
-function CloudMass({ side }: { side: "left" | "right" }) {
-  const id = `cloudmass-${side}`;
-  // puffs sized/placed to build a billowing wall; the inner edge (toward the
-  // seam) is a stack of large arcs so the meeting line reads as one soft cloud.
-  const puffs =
-    side === "left"
-      ? [
-          { cx: 20, cy: 30, r: 34 },
-          { cx: 44, cy: 20, r: 30 },
-          { cx: 60, cy: 34, r: 32 },
-          { cx: 30, cy: 60, r: 36 },
-          { cx: 58, cy: 64, r: 34 },
-          { cx: 74, cy: 50, r: 30 },
-          { cx: 78, cy: 78, r: 30 },
-          { cx: 46, cy: 86, r: 30 },
-          { cx: 12, cy: 84, r: 30 },
-        ]
-      : [
-          { cx: 80, cy: 30, r: 34 },
-          { cx: 56, cy: 20, r: 30 },
-          { cx: 40, cy: 34, r: 32 },
-          { cx: 70, cy: 60, r: 36 },
-          { cx: 42, cy: 64, r: 34 },
-          { cx: 26, cy: 50, r: 30 },
-          { cx: 22, cy: 78, r: 30 },
-          { cx: 54, cy: 86, r: 30 },
-          { cx: 88, cy: 84, r: 30 },
-        ];
-
-  return (
-    <svg
-      className={styles.mass}
-      viewBox="0 0 100 100"
-      preserveAspectRatio="xMidYMid slice"
-      aria-hidden="true"
-    >
-      <defs>
-        <linearGradient id={id} x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor="#ffffff" />
-          <stop offset="60%" stopColor="#f2f8ff" />
-          <stop offset="100%" stopColor="#d8e8f7" />
-        </linearGradient>
-      </defs>
-      <g fill={`url(#${id})`}>
-        {puffs.map((p, i) => (
-          <circle key={i} cx={p.cx} cy={p.cy} r={p.r} />
-        ))}
-      </g>
-    </svg>
   );
 }
