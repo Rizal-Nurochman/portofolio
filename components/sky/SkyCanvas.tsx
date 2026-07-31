@@ -48,7 +48,7 @@ type Cloud = {
   scale: number;
   opacity: number;
   speed: number;
-  bobAmplitude: number;
+  bob: number;
   bobSpeed: number;
   phase: number;
   sprite: number;
@@ -63,12 +63,30 @@ type Bird = {
   opacity: number;
 };
 
+type GrassBlade = {
+  x: number;
+  depth: number;
+  length: number;
+  width: number;
+  sway: number;
+  phase: number;
+  opacity: number;
+};
+
+type DeviceProfile = {
+  compact: boolean;
+  lowPower: boolean;
+  reducedMotion: boolean;
+  dpr: number;
+  layerDpr: number;
+  fps: number;
+};
+
 type SceneLayers = {
   sky: HTMLCanvasElement;
   mountains: HTMLCanvasElement;
-  hills: HTMLCanvasElement;
-  village: HTMLCanvasElement;
-  fields: HTMLCanvasElement;
+  land: HTMLCanvasElement;
+  ground: HTMLCanvasElement;
   foreground: HTMLCanvasElement;
 };
 
@@ -77,12 +95,12 @@ const CLOUD_PATHS = [
   "M44 80 Q22 80 22 60 Q22 46 38 44 Q40 22 68 24 Q84 6 108 22 Q134 18 138 42 Q160 46 158 62 Q158 80 138 80 Z",
   "M52 76 Q34 76 34 60 Q34 48 48 46 Q52 30 74 32 Q90 22 106 34 Q126 34 126 52 Q140 56 138 66 Q136 76 120 76 Z",
   "M24 74 Q8 74 8 62 Q8 50 24 48 Q28 34 52 36 Q64 26 82 34 Q100 28 116 36 Q140 32 152 46 Q176 46 178 60 Q180 74 160 74 Z",
-];
+] as const;
 
 const CLOUD_BANDS = [
-  { drift: 0.55, parallax: 0.025 },
-  { drift: 1, parallax: 0.055 },
-  { drift: 1.45, parallax: 0.09 },
+  { drift: 0.55, parallax: 0.018 },
+  { drift: 0.9, parallax: 0.04 },
+  { drift: 1.25, parallax: 0.07 },
 ] as const;
 
 const clamp = (value: number, min: number, max: number) =>
@@ -107,7 +125,6 @@ function mulberry32(seed: number) {
 
 function readPalette(): Palette {
   const style = getComputedStyle(document.documentElement);
-
   const token = (name: string, fallback: string) =>
     style.getPropertyValue(name).trim() || fallback;
 
@@ -142,9 +159,35 @@ function readPalette(): Palette {
   };
 }
 
+function getDeviceProfile(width: number): DeviceProfile {
+  const hints = navigator as NavigatorHints;
+  const reducedMotion = window.matchMedia(
+    "(prefers-reduced-motion: reduce)",
+  ).matches;
+  const compact = width <= 720;
+  const slowConnection = ["slow-2g", "2g"].includes(
+    hints.connection?.effectiveType ?? "",
+  );
+  const lowPower =
+    hints.connection?.saveData === true ||
+    slowConnection ||
+    (hints.deviceMemory ?? 4) < 4 ||
+    (navigator.hardwareConcurrency ?? 4) < 4;
+  const baseDpr = window.devicePixelRatio || 1;
+  const dpr = Math.min(baseDpr, lowPower ? 1 : compact ? 1.2 : 1.4);
+
+  return {
+    compact,
+    lowPower,
+    reducedMotion,
+    dpr,
+    layerDpr: Math.min(dpr, 1),
+    fps: reducedMotion ? 0 : lowPower ? 24 : compact ? 30 : 40,
+  };
+}
+
 function createSurface(width: number, height: number, dpr: number) {
   const canvas = document.createElement("canvas");
-
   canvas.width = Math.max(1, Math.round(width * dpr));
   canvas.height = Math.max(1, Math.round(height * dpr));
 
@@ -157,49 +200,31 @@ function createSurface(width: number, height: number, dpr: number) {
   context.setTransform(dpr, 0, 0, dpr, 0, 0);
   context.imageSmoothingEnabled = true;
 
-  return {
-    canvas,
-    context,
-  };
+  return { canvas, context };
 }
 
-function makeCloudSprite(
-  shape: number,
-  dpr: number,
-  palette: Palette,
-) {
-  const width = 248;
-  const height = 136;
-
-  const surface = createSurface(width, height, dpr);
-  const { canvas, context } = surface;
-
-  const path = new Path2D(
-    CLOUD_PATHS[shape % CLOUD_PATHS.length],
-  );
+function createCloudSprite(shape: number, dpr: number, palette: Palette) {
+  const width = 232;
+  const height = 128;
+  const { canvas, context } = createSurface(width, height, dpr);
+  const path = new Path2D(CLOUD_PATHS[shape % CLOUD_PATHS.length]);
 
   context.save();
-  context.translate(24, 18);
-  context.shadowColor = "rgba(38, 86, 126, 0.18)";
-  context.shadowBlur = 18;
-  context.shadowOffsetY = 10;
+  context.translate(18, 18);
+  context.shadowColor = "rgba(30, 72, 108, 0.16)";
+  context.shadowBlur = 14;
+  context.shadowOffsetY = 7;
   context.fillStyle = palette.cloudShadow;
-  context.globalAlpha = 0.52;
+  context.globalAlpha = 0.45;
   context.fill(path);
   context.restore();
 
   context.save();
-  context.translate(24, 14);
+  context.translate(18, 13);
 
-  const gradient = context.createLinearGradient(
-    0,
-    8,
-    0,
-    96,
-  );
-
+  const gradient = context.createLinearGradient(0, 8, 0, 98);
   gradient.addColorStop(0, palette.cloud);
-  gradient.addColorStop(0.58, palette.cloudSoft);
+  gradient.addColorStop(0.62, palette.cloudSoft);
   gradient.addColorStop(1, palette.cloudShadow);
 
   context.fillStyle = gradient;
@@ -209,171 +234,141 @@ function makeCloudSprite(
   return canvas;
 }
 
-function createClouds(
-  compact: boolean,
-  lowPower: boolean,
-): Cloud[] {
-  const base: Cloud[] = [
+function createClouds(compact: boolean, lowPower: boolean): Cloud[] {
+  const clouds: Cloud[] = [
     {
       band: 0,
-      x: 0.08,
-      y: 0.13,
-      scale: 0.62,
-      opacity: 0.42,
-      speed: 0.007,
-      bobAmplitude: 3,
-      bobSpeed: 0.22,
+      x: 0.05,
+      y: 0.14,
+      scale: 0.56,
+      opacity: 0.35,
+      speed: 0.008,
+      bob: 3,
+      bobSpeed: 0.2,
       phase: 0.4,
       sprite: 3,
     },
     {
       band: 0,
-      x: 0.39,
-      y: 0.28,
-      scale: 0.48,
-      opacity: 0.34,
-      speed: -0.005,
-      bobAmplitude: 4,
+      x: 0.72,
+      y: 0.12,
+      scale: 0.5,
+      opacity: 0.32,
+      speed: -0.006,
+      bob: 3,
       bobSpeed: 0.18,
-      phase: 2.4,
-      sprite: 2,
-    },
-    {
-      band: 0,
-      x: 0.78,
-      y: 0.11,
-      scale: 0.54,
-      opacity: 0.38,
-      speed: 0.006,
-      bobAmplitude: 3,
-      bobSpeed: 0.2,
-      phase: 4.3,
+      phase: 3.2,
       sprite: 1,
     },
     {
       band: 0,
-      x: 1.04,
-      y: 0.34,
-      scale: 0.68,
-      opacity: 0.38,
+      x: 1.06,
+      y: 0.31,
+      scale: 0.6,
+      opacity: 0.33,
       speed: -0.005,
-      bobAmplitude: 4,
-      bobSpeed: 0.17,
-      phase: 1.7,
+      bob: 4,
+      bobSpeed: 0.16,
+      phase: 1.6,
       sprite: 0,
     },
     {
       band: 1,
       x: -0.08,
-      y: 0.35,
-      scale: 1.05,
-      opacity: 0.66,
-      speed: 0.009,
-      bobAmplitude: 6,
-      bobSpeed: 0.16,
-      phase: 0.9,
+      y: 0.38,
+      scale: 0.94,
+      opacity: 0.56,
+      speed: 0.01,
+      bob: 5,
+      bobSpeed: 0.15,
+      phase: 0.8,
       sprite: 0,
     },
     {
       band: 1,
-      x: 0.68,
-      y: 0.39,
-      scale: 0.82,
-      opacity: 0.6,
+      x: 0.78,
+      y: 0.34,
+      scale: 0.78,
+      opacity: 0.5,
       speed: -0.008,
-      bobAmplitude: 7,
-      bobSpeed: 0.15,
-      phase: 3.2,
+      bob: 6,
+      bobSpeed: 0.14,
+      phase: 3.8,
       sprite: 3,
     },
     {
-      band: 1,
-      x: 1.03,
-      y: 0.19,
-      scale: 0.95,
-      opacity: 0.58,
-      speed: -0.009,
-      bobAmplitude: 6,
-      bobSpeed: 0.19,
-      phase: 5.2,
-      sprite: 1,
-    },
-    {
       band: 2,
-      x: -0.18,
-      y: 0.58,
-      scale: 1.62,
-      opacity: 0.78,
+      x: -0.2,
+      y: 0.62,
+      scale: 1.45,
+      opacity: 0.66,
       speed: 0.012,
-      bobAmplitude: 8,
-      bobSpeed: 0.13,
-      phase: 1.2,
+      bob: 7,
+      bobSpeed: 0.12,
+      phase: 1.1,
       sprite: 0,
     },
     {
       band: 2,
-      x: 1.12,
-      y: 0.62,
-      scale: 1.5,
-      opacity: 0.74,
+      x: 1.18,
+      y: 0.58,
+      scale: 1.32,
+      opacity: 0.62,
       speed: -0.011,
-      bobAmplitude: 9,
-      bobSpeed: 0.12,
-      phase: 4.8,
+      bob: 7,
+      bobSpeed: 0.11,
+      phase: 4.5,
       sprite: 3,
     },
   ];
 
   if (compact) {
-    return base.filter(
-      (_, index) => ![1, 5, 8].includes(index),
-    );
+    return clouds.filter((_, index) => ![2, 5].includes(index));
   }
 
   if (lowPower) {
-    return base.filter((_, index) => index !== 1);
+    return clouds.filter((_, index) => index !== 2);
   }
 
-  return base;
+  return clouds;
 }
 
 function createBirds(compact: boolean): Bird[] {
   const birds: Bird[] = [
     {
-      x: 0.63,
-      y: 0.22,
-      scale: 0.78,
+      x: 0.67,
+      y: 0.21,
+      scale: 0.7,
       speed: 0.004,
       phase: 0.2,
-      opacity: 0.38,
-    },
-    {
-      x: 0.69,
-      y: 0.19,
-      scale: 0.56,
-      speed: 0.0045,
-      phase: 1.3,
-      opacity: 0.32,
-    },
-    {
-      x: 0.74,
-      y: 0.25,
-      scale: 0.44,
-      speed: 0.0035,
-      phase: 2.6,
       opacity: 0.28,
     },
     {
-      x: 0.82,
-      y: 0.17,
-      scale: 0.36,
-      speed: 0.003,
-      phase: 4.1,
-      opacity: 0.24,
+      x: 0.74,
+      y: 0.18,
+      scale: 0.48,
+      speed: 0.0044,
+      phase: 1.8,
+      opacity: 0.22,
     },
   ];
 
-  return compact ? birds.slice(0, 2) : birds;
+  return compact ? birds.slice(0, 1) : birds;
+}
+
+function createGrassBlades(compact: boolean): GrassBlade[] {
+  const random = mulberry32(5221);
+  const count = compact ? 24 : 42;
+
+  return Array.from({ length: count }, (_, index) => ({
+    x: random(),
+    depth: random(),
+    length: 10 + random() * 20,
+    width: 0.8 + random() * 1.1,
+    sway: 2 + random() * 3,
+    phase: index * 0.61 + random(),
+    opacity: 0.18 + random() * 0.24,
+  }));
 }
 
 function traceRidge(
@@ -386,35 +381,21 @@ function traceRidge(
 ) {
   const random = mulberry32(seed);
   const points = 9;
-  const values: { x: number; y: number }[] = [];
+  const values: Array<{ x: number; y: number }> = [];
 
   for (let index = 0; index <= points; index += 1) {
     const x = (width / points) * index;
-    const normalized = index / points;
-
+    const progress = index / points;
     const wave =
-      Math.sin(
-        normalized * Math.PI * 2.2 + seed * 0.07,
-      ) *
-        0.16 +
-      Math.sin(
-        normalized * Math.PI * 5.1 + seed * 0.11,
-      ) *
-        0.07;
-
-    const centerLift =
-      Math.exp(
-        -Math.pow((normalized - 0.58) * 2.6, 2),
-      ) * 0.58;
-
-    const jitter = (random() - 0.5) * 0.06;
+      Math.sin(progress * Math.PI * 2.1 + seed * 0.07) * 0.16 +
+      Math.sin(progress * Math.PI * 5 + seed * 0.11) * 0.07;
+    const center =
+      Math.exp(-Math.pow((progress - 0.58) * 2.6, 2)) * 0.58;
+    const jitter = (random() - 0.5) * 0.05;
 
     values.push({
       x,
-      y:
-        baseline -
-        amplitude *
-          (0.28 + centerLift + wave + jitter),
+      y: baseline - amplitude * (0.28 + center + wave + jitter),
     });
   }
 
@@ -422,27 +403,18 @@ function traceRidge(
   context.moveTo(0, height);
   context.lineTo(values[0].x, values[0].y);
 
-  for (
-    let index = 1;
-    index < values.length;
-    index += 1
-  ) {
+  for (let index = 1; index < values.length; index += 1) {
     const previous = values[index - 1];
     const current = values[index];
-
-    const midX = (previous.x + current.x) / 2;
-    const midY = (previous.y + current.y) / 2;
-
     context.quadraticCurveTo(
       previous.x,
       previous.y,
-      midX,
-      midY,
+      (previous.x + current.x) / 2,
+      (previous.y + current.y) / 2,
     );
   }
 
   const last = values[values.length - 1];
-
   context.lineTo(last.x, last.y);
   context.lineTo(width, height);
   context.closePath();
@@ -454,32 +426,29 @@ function drawTree(
   y: number,
   scale: number,
   palette: Palette,
-  opacity = 1,
+  opacity: number,
 ) {
   context.save();
   context.globalAlpha = opacity;
-
   context.fillStyle = palette.wood;
   context.fillRect(
-    x - scale * 0.055,
-    y - scale * 0.64,
-    scale * 0.11,
-    scale * 0.68,
+    x - scale * 0.05,
+    y - scale * 0.62,
+    scale * 0.1,
+    scale * 0.65,
   );
-
   context.fillStyle = palette.forest;
 
   const crowns = [
-    [-0.22, -0.68, 0.29],
-    [0.14, -0.72, 0.33],
-    [-0.02, -0.98, 0.35],
-    [0.28, -0.95, 0.24],
-    [-0.28, -0.93, 0.24],
+    [-0.2, -0.7, 0.28],
+    [0.13, -0.72, 0.31],
+    [-0.03, -0.98, 0.34],
+    [0.26, -0.94, 0.22],
+    [-0.27, -0.92, 0.22],
   ];
 
-  crowns.forEach(([dx, dy, radius]) => {
+  for (const [dx, dy, radius] of crowns) {
     context.beginPath();
-
     context.arc(
       x + dx * scale,
       y + dy * scale,
@@ -487,9 +456,8 @@ function drawTree(
       0,
       Math.PI * 2,
     );
-
     context.fill();
-  });
+  }
 
   context.restore();
 }
@@ -500,51 +468,37 @@ function drawPalm(
   y: number,
   scale: number,
   palette: Palette,
-  opacity = 1,
+  opacity: number,
 ) {
   context.save();
   context.globalAlpha = opacity;
   context.strokeStyle = palette.wood;
-  context.lineWidth = Math.max(1, scale * 0.07);
+  context.lineWidth = Math.max(1, scale * 0.065);
   context.lineCap = "round";
-
   context.beginPath();
   context.moveTo(x, y);
-
   context.quadraticCurveTo(
     x + scale * 0.08,
     y - scale * 0.72,
     x - scale * 0.03,
-    y - scale * 1.25,
+    y - scale * 1.2,
   );
-
   context.stroke();
-
-  context.translate(
-    x - scale * 0.03,
-    y - scale * 1.25,
-  );
-
+  context.translate(x - scale * 0.03, y - scale * 1.2);
   context.strokeStyle = palette.forest;
-  context.lineWidth = Math.max(1, scale * 0.055);
+  context.lineWidth = Math.max(1, scale * 0.05);
 
   for (let index = 0; index < 7; index += 1) {
-    const angle =
-      (Math.PI * 2 * index) / 7 - Math.PI * 0.1;
-
-    const length =
-      scale * (0.52 + (index % 2) * 0.08);
-
+    const angle = (Math.PI * 2 * index) / 7 - Math.PI * 0.1;
+    const length = scale * (0.48 + (index % 2) * 0.08);
     context.beginPath();
     context.moveTo(0, 0);
-
     context.quadraticCurveTo(
       Math.cos(angle) * length * 0.55,
-      Math.sin(angle) * length * 0.4,
+      Math.sin(angle) * length * 0.38,
       Math.cos(angle) * length,
       Math.sin(angle) * length,
     );
-
     context.stroke();
   }
 
@@ -557,54 +511,31 @@ function drawHouse(
   y: number,
   scale: number,
   palette: Palette,
-  opacity = 1,
+  opacity: number,
 ) {
   context.save();
   context.globalAlpha = opacity;
-
   context.fillStyle = palette.cloudSoft;
-
   context.fillRect(
-    x - scale * 0.46,
-    y - scale * 0.42,
-    scale * 0.92,
-    scale * 0.5,
+    x - scale * 0.44,
+    y - scale * 0.4,
+    scale * 0.88,
+    scale * 0.48,
   );
-
   context.fillStyle = palette.roof;
   context.beginPath();
-
-  context.moveTo(
-    x - scale * 0.58,
-    y - scale * 0.38,
-  );
-
-  context.lineTo(x, y - scale * 0.82);
-
-  context.lineTo(
-    x + scale * 0.58,
-    y - scale * 0.38,
-  );
-
+  context.moveTo(x - scale * 0.56, y - scale * 0.36);
+  context.lineTo(x, y - scale * 0.78);
+  context.lineTo(x + scale * 0.56, y - scale * 0.36);
   context.closePath();
   context.fill();
-
   context.fillStyle = palette.wood;
-
   context.fillRect(
-    x - scale * 0.09,
-    y - scale * 0.2,
-    scale * 0.18,
-    scale * 0.28,
+    x - scale * 0.08,
+    y - scale * 0.19,
+    scale * 0.16,
+    scale * 0.27,
   );
-
-  context.fillRect(
-    x - scale * 0.34,
-    y - scale * 0.23,
-    scale * 0.15,
-    scale * 0.14,
-  );
-
   context.restore();
 }
 
@@ -614,25 +545,16 @@ function drawSkyLayer(
   height: number,
   palette: Palette,
 ) {
-  const sky = context.createLinearGradient(
-    0,
-    0,
-    0,
-    height,
-  );
-
-  sky.addColorStop(0, palette.skyHigh);
-  sky.addColorStop(0.52, palette.sky);
-  sky.addColorStop(1, palette.skyLow);
-
-  context.fillStyle = sky;
+  const gradient = context.createLinearGradient(0, 0, 0, height);
+  gradient.addColorStop(0, palette.skyHigh);
+  gradient.addColorStop(0.5, palette.sky);
+  gradient.addColorStop(1, palette.skyLow);
+  context.fillStyle = gradient;
   context.fillRect(0, 0, width, height);
 
-  const sunX = width * 0.79;
-  const sunY = height * 0.18;
-  const sunRadius =
-    Math.min(width, height) * 0.22;
-
+  const sunX = width * 0.8;
+  const sunY = height * 0.17;
+  const sunRadius = Math.min(width, height) * 0.24;
   const glow = context.createRadialGradient(
     sunX,
     sunY,
@@ -641,51 +563,19 @@ function drawSkyLayer(
     sunY,
     sunRadius,
   );
-
   glow.addColorStop(0, palette.sunGlow);
-  glow.addColorStop(0.16, palette.sun);
-  glow.addColorStop(
-    0.46,
-    "rgba(255, 235, 164, 0.22)",
-  );
-  glow.addColorStop(
-    1,
-    "rgba(255, 235, 164, 0)",
-  );
-
+  glow.addColorStop(0.14, palette.sun);
+  glow.addColorStop(0.46, "rgba(255, 235, 164, 0.2)");
+  glow.addColorStop(1, "rgba(255, 235, 164, 0)");
   context.fillStyle = glow;
   context.fillRect(0, 0, width, height);
 
-  const horizon = context.createLinearGradient(
-    0,
-    height * 0.48,
-    0,
-    height,
-  );
-
-  horizon.addColorStop(
-    0,
-    "rgba(255, 255, 255, 0)",
-  );
-
-  horizon.addColorStop(
-    0.72,
-    "rgba(245, 250, 237, 0.22)",
-  );
-
-  horizon.addColorStop(
-    1,
-    "rgba(255, 247, 213, 0.32)",
-  );
-
-  context.fillStyle = horizon;
-
-  context.fillRect(
-    0,
-    height * 0.42,
-    width,
-    height * 0.58,
-  );
+  const haze = context.createLinearGradient(0, height * 0.48, 0, height);
+  haze.addColorStop(0, "rgba(255, 255, 255, 0)");
+  haze.addColorStop(0.7, "rgba(245, 250, 237, 0.18)");
+  haze.addColorStop(1, "rgba(255, 247, 213, 0.3)");
+  context.fillStyle = haze;
+  context.fillRect(0, height * 0.42, width, height * 0.58);
 }
 
 function drawMountainLayer(
@@ -695,103 +585,52 @@ function drawMountainLayer(
   palette: Palette,
 ) {
   context.save();
-
-  context.filter = `blur(${Math.max(
-    2,
-    Math.min(width, height) * 0.004,
-  )}px)`;
-
-  context.globalAlpha = 0.38;
+  context.filter = `blur(${Math.max(1.5, Math.min(width, height) * 0.003)}px)`;
+  context.globalAlpha = 0.34;
   context.fillStyle = palette.mountainFar;
-
-  traceRidge(
-    context,
-    width,
-    height,
-    height * 0.73,
-    height * 0.31,
-    31,
-  );
-
+  traceRidge(context, width, height, height * 0.74, height * 0.3, 31);
   context.fill();
-
-  context.globalAlpha = 0.54;
+  context.globalAlpha = 0.48;
   context.fillStyle = palette.mountainMid;
-
-  traceRidge(
-    context,
-    width,
-    height,
-    height * 0.78,
-    height * 0.23,
-    73,
-  );
-
+  traceRidge(context, width, height, height * 0.79, height * 0.22, 73);
   context.fill();
   context.restore();
 
-  const mist = context.createLinearGradient(
-    0,
-    height * 0.48,
-    0,
-    height * 0.84,
-  );
-
-  mist.addColorStop(
-    0,
-    "rgba(255, 255, 255, 0)",
-  );
-
-  mist.addColorStop(
-    0.58,
-    "rgba(238, 248, 244, 0.18)",
-  );
-
-  mist.addColorStop(
-    1,
-    "rgba(238, 248, 244, 0.5)",
-  );
-
+  const mist = context.createLinearGradient(0, height * 0.48, 0, height * 0.84);
+  mist.addColorStop(0, "rgba(255,255,255,0)");
+  mist.addColorStop(0.58, "rgba(238,248,244,0.16)");
+  mist.addColorStop(1, "rgba(238,248,244,0.46)");
   context.fillStyle = mist;
-
-  context.fillRect(
-    0,
-    height * 0.43,
-    width,
-    height * 0.45,
-  );
+  context.fillRect(0, height * 0.44, width, height * 0.42);
 }
 
-function drawHillLayer(
+function drawLandLayer(
   context: CanvasRenderingContext2D,
   width: number,
   height: number,
   palette: Palette,
 ) {
   context.fillStyle = palette.hillFar;
-  context.globalAlpha = 0.82;
+  context.globalAlpha = 0.78;
   context.beginPath();
   context.moveTo(0, height);
-  context.lineTo(0, height * 0.78);
-
+  context.lineTo(0, height * 0.8);
   context.bezierCurveTo(
-    width * 0.16,
+    width * 0.2,
     height * 0.68,
-    width * 0.31,
-    height * 0.75,
-    width * 0.46,
+    width * 0.36,
+    height * 0.79,
+    width * 0.54,
     height * 0.7,
   );
-
   context.bezierCurveTo(
-    width * 0.63,
-    height * 0.63,
-    width * 0.77,
-    height * 0.74,
+    width * 0.72,
+    height * 0.62,
+    width * 0.86,
+    height * 0.76,
     width,
-    height * 0.66,
+    height * 0.68,
   );
-
   context.lineTo(width, height);
   context.closePath();
   context.fill();
@@ -800,322 +639,129 @@ function drawHillLayer(
   context.globalAlpha = 0.9;
   context.beginPath();
   context.moveTo(0, height);
-  context.lineTo(0, height * 0.85);
-
+  context.lineTo(0, height * 0.87);
   context.bezierCurveTo(
     width * 0.18,
-    height * 0.73,
-    width * 0.34,
-    height * 0.84,
-    width * 0.55,
-    height * 0.74,
+    height * 0.76,
+    width * 0.38,
+    height * 0.86,
+    width * 0.58,
+    height * 0.75,
   );
-
   context.bezierCurveTo(
     width * 0.76,
-    height * 0.64,
-    width * 0.89,
-    height * 0.78,
+    height * 0.66,
+    width * 0.9,
+    height * 0.8,
     width,
-    height * 0.73,
+    height * 0.74,
   );
-
   context.lineTo(width, height);
   context.closePath();
   context.fill();
 
-  context.globalAlpha = 0.42;
-  context.strokeStyle = palette.forest;
-  context.lineWidth = 2;
-  context.beginPath();
-  context.moveTo(0, height * 0.82);
+  const baseY = height * 0.8;
+  const scale = clamp(width / 1200, 0.6, 1.12);
 
-  context.bezierCurveTo(
-    width * 0.25,
-    height * 0.73,
-    width * 0.48,
-    height * 0.82,
-    width,
-    height * 0.7,
-  );
+  drawTree(context, width * 0.1, baseY + 10, 44 * scale, palette, 0.72);
+  drawPalm(context, width * 0.16, baseY + 10, 36 * scale, palette, 0.76);
+  drawHouse(context, width * 0.22, baseY, 34 * scale, palette, 0.82);
+  drawTree(context, width * 0.29, baseY + 8, 38 * scale, palette, 0.72);
+  drawTree(context, width * 0.76, baseY + 8, 40 * scale, palette, 0.72);
+  drawHouse(context, width * 0.83, baseY, 31 * scale, palette, 0.84);
+  drawPalm(context, width * 0.9, baseY + 10, 38 * scale, palette, 0.78);
 
-  context.stroke();
-  context.globalAlpha = 1;
-}
-
-function drawVillageLayer(
-  context: CanvasRenderingContext2D,
-  width: number,
-  height: number,
-  palette: Palette,
-) {
-  const baseY = height * 0.78;
-  const scale = clamp(width / 1200, 0.62, 1.18);
-
-  context.globalAlpha = 0.88;
-
-  drawTree(
-    context,
-    width * 0.08,
-    baseY + 8,
-    48 * scale,
-    palette,
-    0.82,
-  );
-
-  drawPalm(
-    context,
-    width * 0.14,
-    baseY + 10,
-    38 * scale,
-    palette,
-    0.84,
-  );
-
-  drawHouse(
-    context,
-    width * 0.2,
-    baseY,
-    38 * scale,
-    palette,
-    0.9,
-  );
-
-  drawTree(
-    context,
-    width * 0.27,
-    baseY + 8,
-    42 * scale,
-    palette,
-    0.82,
-  );
-
-  drawTree(
-    context,
-    width * 0.72,
-    baseY + 8,
-    44 * scale,
-    palette,
-    0.82,
-  );
-
-  drawHouse(
-    context,
-    width * 0.79,
-    baseY,
-    34 * scale,
-    palette,
-    0.92,
-  );
-
-  drawPalm(
-    context,
-    width * 0.86,
-    baseY + 10,
-    42 * scale,
-    palette,
-    0.86,
-  );
-
-  drawHouse(
-    context,
-    width * 0.92,
-    baseY + 4,
-    28 * scale,
-    palette,
-    0.82,
-  );
-
+  context.globalAlpha = 0.5;
   context.strokeStyle = palette.hedge;
-  context.lineWidth = Math.max(2, 4 * scale);
+  context.lineWidth = Math.max(2, 3 * scale);
   context.lineCap = "round";
-  context.globalAlpha = 0.68;
   context.beginPath();
   context.moveTo(0, baseY + 12);
-
   context.bezierCurveTo(
-    width * 0.28,
+    width * 0.3,
     baseY - 4,
-    width * 0.54,
-    baseY + 22,
+    width * 0.58,
+    baseY + 20,
     width,
     baseY + 2,
   );
-
   context.stroke();
   context.globalAlpha = 1;
 }
 
-function drawFieldsLayer(
+function drawGroundLayer(
   context: CanvasRenderingContext2D,
   width: number,
   height: number,
   palette: Palette,
 ) {
-  const horizon = height * 0.78;
-
-  const meadow = context.createLinearGradient(
-    0,
-    horizon,
-    0,
-    height,
-  );
-
-  meadow.addColorStop(
-    0,
-    palette.meadowLight,
-  );
-
-  meadow.addColorStop(
-    0.56,
-    palette.meadow,
-  );
-
-  meadow.addColorStop(
-    1,
-    palette.meadowDeep,
-  );
-
+  const horizon = height * 0.79;
+  const meadow = context.createLinearGradient(0, horizon, 0, height);
+  meadow.addColorStop(0, palette.meadowLight);
+  meadow.addColorStop(0.58, palette.meadow);
+  meadow.addColorStop(1, palette.meadowDeep);
   context.fillStyle = meadow;
+  context.fillRect(0, horizon, width, height - horizon);
 
-  context.fillRect(
-    0,
-    horizon,
-    width,
-    height - horizon,
-  );
-
-  const rows = [0.81, 0.85, 0.9, 0.96];
+  const rows = [0.83, 0.87, 0.92, 0.97];
 
   rows.forEach((row, index) => {
     const y = height * row;
-
-    context.globalAlpha =
-      0.24 + index * 0.06;
-
-    context.strokeStyle =
-      index % 2 === 0
-        ? palette.water
-        : palette.hedge;
-
-    context.lineWidth = 1 + index * 0.7;
+    context.globalAlpha = 0.18 + index * 0.05;
+    context.strokeStyle = index % 2 === 0 ? palette.water : palette.hedge;
+    context.lineWidth = 1 + index * 0.55;
     context.beginPath();
     context.moveTo(0, y);
-
     context.bezierCurveTo(
-      width * 0.22,
-      y - 10,
-      width * 0.44,
-      y + 14,
+      width * 0.23,
+      y - 8,
+      width * 0.45,
+      y + 10,
       width * 0.66,
-      y - 4,
+      y - 3,
     );
-
     context.bezierCurveTo(
       width * 0.82,
-      y - 12,
-      width * 0.92,
-      y + 8,
+      y - 9,
+      width * 0.93,
+      y + 6,
       width,
       y - 2,
     );
-
     context.stroke();
   });
 
-  context.globalAlpha = 0.18;
-  context.strokeStyle = palette.path;
-  context.lineWidth = 1.4;
-
-  for (let index = 1; index < 8; index += 1) {
-    const x = (width / 8) * index;
-
-    context.beginPath();
-    context.moveTo(x, height);
-
-    context.lineTo(
-      lerp(width * 0.58, x, 0.1),
-      horizon + 10,
-    );
-
-    context.stroke();
-  }
-
   const path = context.createLinearGradient(
-    width * 0.58,
+    width * 0.57,
     horizon,
     width * 0.48,
     height,
   );
-
   path.addColorStop(0, palette.path);
   path.addColorStop(1, palette.soil);
-
-  context.globalAlpha = 0.92;
+  context.globalAlpha = 0.86;
   context.fillStyle = path;
   context.beginPath();
-
-  context.moveTo(
-    width * 0.565,
-    horizon + 4,
-  );
-
+  context.moveTo(width * 0.565, horizon + 4);
   context.bezierCurveTo(
     width * 0.55,
-    height * 0.84,
+    height * 0.85,
     width * 0.47,
-    height * 0.9,
-    width * 0.36,
+    height * 0.91,
+    width * 0.38,
     height,
   );
-
-  context.lineTo(width * 0.63, height);
-
+  context.lineTo(width * 0.62, height);
   context.bezierCurveTo(
     width * 0.59,
-    height * 0.9,
+    height * 0.91,
     width * 0.59,
-    height * 0.84,
+    height * 0.85,
     width * 0.575,
     horizon + 4,
   );
-
   context.closePath();
   context.fill();
-
-  context.globalAlpha = 0.38;
-  context.strokeStyle = palette.hedge;
-  context.lineWidth = 3;
-  context.beginPath();
-  context.moveTo(0, height * 0.885);
-
-  context.bezierCurveTo(
-    width * 0.24,
-    height * 0.84,
-    width * 0.42,
-    height * 0.9,
-    width * 0.55,
-    height * 0.86,
-  );
-
-  context.stroke();
-  context.beginPath();
-
-  context.moveTo(
-    width * 0.61,
-    height * 0.87,
-  );
-
-  context.bezierCurveTo(
-    width * 0.76,
-    height * 0.82,
-    width * 0.9,
-    height * 0.9,
-    width,
-    height * 0.84,
-  );
-
-  context.stroke();
   context.globalAlpha = 1;
 }
 
@@ -1126,93 +772,49 @@ function drawForegroundLayer(
   palette: Palette,
 ) {
   const top = height * 0.91;
-
-  const foreground =
-    context.createLinearGradient(
-      0,
-      top,
-      0,
-      height,
-    );
-
-  foreground.addColorStop(
-    0,
-    palette.meadow,
-  );
-
-  foreground.addColorStop(
-    1,
-    palette.forest,
-  );
-
+  const foreground = context.createLinearGradient(0, top, 0, height);
+  foreground.addColorStop(0, palette.meadow);
+  foreground.addColorStop(1, palette.forest);
   context.fillStyle = foreground;
   context.beginPath();
   context.moveTo(0, height);
   context.lineTo(0, top + 12);
-
   context.bezierCurveTo(
     width * 0.2,
-    top - 16,
-    width * 0.34,
-    top + 18,
-    width * 0.52,
-    top - 5,
+    top - 14,
+    width * 0.36,
+    top + 16,
+    width * 0.54,
+    top - 4,
   );
-
   context.bezierCurveTo(
     width * 0.72,
-    top - 28,
-    width * 0.86,
-    top + 16,
+    top - 24,
+    width * 0.87,
+    top + 14,
     width,
-    top - 12,
+    top - 10,
   );
-
   context.lineTo(width, height);
   context.closePath();
   context.fill();
 
   const random = mulberry32(9182);
-
-  const flowers = [
+  const colors = [
     palette.flowerGold,
     palette.flowerLavender,
     palette.flowerRose,
   ];
+  const count = width <= 720 ? 14 : 26;
 
-  const amount = width < 720 ? 26 : 48;
-
-  for (
-    let index = 0;
-    index < amount;
-    index += 1
-  ) {
+  for (let index = 0; index < count; index += 1) {
     const x = random() * width;
-
-    const y =
-      top +
-      12 +
-      random() *
-        Math.max(20, height - top - 18);
-
-    const size = 1.3 + random() * 2.4;
-
-    context.globalAlpha =
-      0.34 + random() * 0.4;
-
-    context.fillStyle =
-      flowers[index % flowers.length];
-
+    const y = top + 10 + random() * Math.max(18, height - top - 14);
+    const size = 1.2 + random() * 1.8;
+    context.globalAlpha = 0.28 + random() * 0.34;
+    context.fillStyle = colors[index % colors.length];
     context.beginPath();
-
-    context.arc(
-      x,
-      y,
-      size,
-      0,
-      Math.PI * 2,
-    );
-
+    context.arc(x, y, size, 0, Math.PI * 2);
     context.fill();
   }
 
@@ -1225,90 +827,26 @@ function buildLayers(
   dpr: number,
   palette: Palette,
 ): SceneLayers {
-  const sky = createSurface(
-    width,
-    height,
-    dpr,
-  );
+  const sky = createSurface(width, height, dpr);
+  drawSkyLayer(sky.context, width, height, palette);
 
-  drawSkyLayer(
-    sky.context,
-    width,
-    height,
-    palette,
-  );
+  const mountains = createSurface(width, height, dpr);
+  drawMountainLayer(mountains.context, width, height, palette);
 
-  const mountains = createSurface(
-    width,
-    height,
-    dpr,
-  );
+  const land = createSurface(width, height, dpr);
+  drawLandLayer(land.context, width, height, palette);
 
-  drawMountainLayer(
-    mountains.context,
-    width,
-    height,
-    palette,
-  );
+  const ground = createSurface(width, height, dpr);
+  drawGroundLayer(ground.context, width, height, palette);
 
-  const hills = createSurface(
-    width,
-    height,
-    dpr,
-  );
-
-  drawHillLayer(
-    hills.context,
-    width,
-    height,
-    palette,
-  );
-
-  const village = createSurface(
-    width,
-    height,
-    dpr,
-  );
-
-  drawVillageLayer(
-    village.context,
-    width,
-    height,
-    palette,
-  );
-
-  const fields = createSurface(
-    width,
-    height,
-    dpr,
-  );
-
-  drawFieldsLayer(
-    fields.context,
-    width,
-    height,
-    palette,
-  );
-
-  const foreground = createSurface(
-    width,
-    height,
-    dpr,
-  );
-
-  drawForegroundLayer(
-    foreground.context,
-    width,
-    height,
-    palette,
-  );
+  const foreground = createSurface(width, height, dpr);
+  drawForegroundLayer(foreground.context, width, height, palette);
 
   return {
     sky: sky.canvas,
     mountains: mountains.canvas,
-    hills: hills.canvas,
-    village: village.canvas,
-    fields: fields.canvas,
+    land: land.canvas,
+    ground: ground.canvas,
     foreground: foreground.canvas,
   };
 }
@@ -1319,14 +857,16 @@ function drawLayer(
   width: number,
   height: number,
   offsetY: number,
+  opacity = 1,
 ) {
-  context.drawImage(
-    layer,
-    0,
-    offsetY,
-    width,
-    height,
-  );
+  if (opacity <= 0.001) {
+    return;
+  }
+
+  context.save();
+  context.globalAlpha = opacity;
+  context.drawImage(layer, 0, offsetY, width, height);
+  context.restore();
 }
 
 function drawCloudBand(
@@ -1343,67 +883,37 @@ function drawCloudBand(
 ) {
   const settings = CLOUD_BANDS[band];
 
-  clouds.forEach((cloud) => {
+  for (const cloud of clouds) {
     if (cloud.band !== band) {
-      return;
+      continue;
     }
 
     if (animate) {
-      cloud.x +=
-        cloud.speed *
-        settings.drift *
-        delta;
+      cloud.x += cloud.speed * settings.drift * delta;
 
-      if (cloud.x > 1.28) {
-        cloud.x = -0.28;
-      }
-
-      if (cloud.x < -0.28) {
-        cloud.x = 1.28;
+      if (cloud.x > 1.3) {
+        cloud.x = -0.3;
+      } else if (cloud.x < -0.3) {
+        cloud.x = 1.3;
       }
     }
 
-    const sprite =
-      sprites[
-        cloud.sprite % sprites.length
-      ];
-
-    const baseWidth =
-      248 * cloud.scale;
-
-    const baseHeight =
-      136 * cloud.scale;
-
+    const sprite = sprites[cloud.sprite % sprites.length];
+    const spriteWidth = 232 * cloud.scale;
+    const spriteHeight = 128 * cloud.scale;
     const bob = animate
-      ? Math.sin(
-          time * cloud.bobSpeed +
-            cloud.phase,
-        ) * cloud.bobAmplitude
+      ? Math.sin(time * cloud.bobSpeed + cloud.phase) * cloud.bob
       : 0;
-
-    const x =
-      cloud.x * width -
-      baseWidth / 2;
-
+    const x = cloud.x * width - spriteWidth / 2;
     const y =
       cloud.y * height -
-      baseHeight / 2 +
+      spriteHeight / 2 +
       bob -
-      scroll *
-        settings.parallax *
-        height;
+      scroll * settings.parallax * height;
 
-    context.globalAlpha =
-      cloud.opacity;
-
-    context.drawImage(
-      sprite,
-      x,
-      y,
-      baseWidth,
-      baseHeight,
-    );
-  });
+    context.globalAlpha = cloud.opacity;
+    context.drawImage(sprite, x, y, spriteWidth, spriteHeight);
+  }
 
   context.globalAlpha = 1;
 }
@@ -1418,149 +928,76 @@ function drawBirds(
   palette: Palette,
   animate: boolean,
 ) {
-  context.strokeStyle =
-    palette.skyDeep;
-
+  context.strokeStyle = palette.skyDeep;
   context.lineCap = "round";
 
-  birds.forEach((bird) => {
+  for (const bird of birds) {
     if (animate) {
       bird.x += bird.speed * delta;
 
       if (bird.x > 1.08) {
-        bird.x = 0.52;
+        bird.x = 0.56;
       }
     }
 
     const x = bird.x * width;
+    const y = bird.y * height + Math.sin(time * 0.4 + bird.phase) * 2.5;
+    const wing = animate ? Math.sin(time * 2.2 + bird.phase) * 1.8 : 0;
+    const size = 8 * bird.scale;
 
-    const y =
-      bird.y * height +
-      Math.sin(
-        time * 0.4 + bird.phase,
-      ) *
-        3;
-
-    const wing = animate
-      ? Math.sin(
-          time * 2.2 + bird.phase,
-        ) * 2.2
-      : 0;
-
-    const size = 9 * bird.scale;
-
-    context.globalAlpha =
-      bird.opacity;
-
-    context.lineWidth = Math.max(
-      1,
-      1.25 * bird.scale,
-    );
-
+    context.globalAlpha = bird.opacity;
+    context.lineWidth = Math.max(1, 1.15 * bird.scale);
     context.beginPath();
-
-    context.moveTo(
-      x - size,
-      y + wing,
-    );
-
-    context.quadraticCurveTo(
-      x - size * 0.45,
-      y - size * 0.55,
-      x,
-      y,
-    );
-
-    context.quadraticCurveTo(
-      x + size * 0.45,
-      y - size * 0.55,
-      x + size,
-      y + wing,
-    );
-
+    context.moveTo(x - size, y + wing);
+    context.quadraticCurveTo(x - size * 0.45, y - size * 0.55, x, y);
+    context.quadraticCurveTo(x + size * 0.45, y - size * 0.55, x + size, y + wing);
     context.stroke();
-  });
+  }
 
   context.globalAlpha = 1;
 }
 
-function drawMovingGrass(
+function drawGrass(
   context: CanvasRenderingContext2D,
+  blades: GrassBlade[],
   width: number,
   height: number,
   time: number,
-  descent: number,
+  foregroundOffset: number,
+  reveal: number,
   palette: Palette,
   animate: boolean,
 ) {
-  if (descent < 0.34) {
+  if (reveal <= 0.01) {
     return;
   }
 
-  const reveal = smoothstep(
-    0.34,
-    0.78,
-    descent,
-  );
-
-  const baseY =
-    height *
-    lerp(1.09, 0.9, reveal);
-
-  const count =
-    width < 720 ? 26 : 46;
-
-  const random = mulberry32(5221);
-
-  context.strokeStyle =
-    palette.forest;
-
+  const baseY = height * 0.91 + foregroundOffset;
+  context.strokeStyle = palette.forest;
   context.lineCap = "round";
 
-  for (
-    let index = 0;
-    index < count;
-    index += 1
-  ) {
-    const x = random() * width;
+  for (const blade of blades) {
+    const x = blade.x * width;
+    const y = baseY + blade.depth * height * 0.1;
 
-    const length =
-      10 + random() * 22;
+    if (y > height + blade.length || y < -blade.length) {
+      continue;
+    }
 
     const sway = animate
-      ? Math.sin(
-          time * 0.7 +
-            index * 0.62,
-        ) *
-        (2 + random() * 3)
+      ? Math.sin(time * 0.72 + blade.phase) * blade.sway
       : 0;
 
-    const y =
-      baseY +
-      random() *
-        Math.max(
-          12,
-          height - baseY + 24,
-        );
-
-    context.globalAlpha =
-      (0.18 + random() * 0.28) *
-      reveal;
-
-    context.lineWidth =
-      0.8 + random() * 1.2;
-
+    context.globalAlpha = blade.opacity * reveal;
+    context.lineWidth = blade.width;
     context.beginPath();
-
     context.moveTo(x, y);
-
     context.quadraticCurveTo(
       x + sway * 0.35,
-      y - length * 0.55,
+      y - blade.length * 0.55,
       x + sway,
-      y - length,
+      y - blade.length,
     );
-
     context.stroke();
   }
 
@@ -1568,249 +1005,107 @@ function drawMovingGrass(
 }
 
 export default function SkyCanvas() {
-  const canvasRef =
-    useRef<HTMLCanvasElement>(null);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
 
   useEffect(() => {
-    const canvas =
-      canvasRef.current;
+    const canvas = canvasRef.current;
 
     if (!canvas) {
       return;
     }
 
-    const context =
-      canvas.getContext("2d", {
-        alpha: false,
-        desynchronized: true,
-      });
+    const context = canvas.getContext("2d", {
+      alpha: false,
+      desynchronized: true,
+    });
 
     if (!context) {
       return;
     }
 
-    const navigatorHints =
-      navigator as NavigatorHints;
-
-    const reducedMotion =
-      window.matchMedia(
-        "(prefers-reduced-motion: reduce)",
-      ).matches;
-
-    const compact =
-      window.matchMedia(
-        "(max-width: 720px)",
-      ).matches;
-
-    const lowPower =
-      navigatorHints.connection
-        ?.saveData === true ||
-      navigatorHints.connection
-        ?.effectiveType === "slow-2g" ||
-      navigatorHints.connection
-        ?.effectiveType === "2g" ||
-      (navigatorHints.deviceMemory ??
-        4) < 4 ||
-      (navigator.hardwareConcurrency ??
-        4) < 4;
-
     let width = 1;
     let height = 1;
-    let dpr = 1;
-
-    let palette =
-      readPalette();
-
-    let layers:
-      | SceneLayers
-      | null = null;
-
-    let sprites:
-      HTMLCanvasElement[] = [];
-
-    let clouds = createClouds(
-      compact,
-      lowPower,
-    );
-
-    let birds =
-      createBirds(compact);
-
+    let profile = getDeviceProfile(window.innerWidth);
+    let palette = readPalette();
+    let layers: SceneLayers | null = null;
+    let sprites: HTMLCanvasElement[] = [];
+    let clouds = createClouds(profile.compact, profile.lowPower);
+    let birds = createBirds(profile.compact);
+    let grass = createGrassBlades(profile.compact);
     let targetScroll = 0;
     let currentScroll = 0;
-    let frameId = 0;
+    let animationFrame = 0;
     let resizeFrame = 0;
-
-    let lastFrame =
-      performance.now();
-
+    let lastFrame = performance.now();
     let lastPaint = 0;
-
-    let running =
-      !document.hidden;
-
-    const targetFps = reducedMotion
-      ? 0
-      : lowPower
-        ? 24
-        : compact
-          ? 30
-          : 40;
-
-    const frameInterval =
-      targetFps > 0
-        ? 1000 / targetFps
-        : 0;
+    let running = !document.hidden;
 
     const readScroll = () => {
-      const max =
-        document.documentElement
-          .scrollHeight -
-        window.innerHeight;
-
-      targetScroll =
-        max > 0
-          ? clamp(
-              window.scrollY / max,
-              0,
-              1,
-            )
-          : 0;
+      const max = document.documentElement.scrollHeight - window.innerHeight;
+      targetScroll = max > 0 ? clamp(window.scrollY / max, 0, 1) : 0;
     };
 
-    const resize = () => {
-      width = Math.max(
-        1,
-        window.innerWidth,
-      );
+    const rebuild = () => {
+      width = Math.max(1, window.innerWidth);
+      height = Math.max(1, window.innerHeight);
 
-      height = Math.max(
-        1,
-        window.innerHeight,
-      );
+      const previousCompact = profile.compact;
+      const previousLowPower = profile.lowPower;
+      profile = getDeviceProfile(width);
 
-      const baseDpr =
-        window.devicePixelRatio || 1;
+      if (
+        previousCompact !== profile.compact ||
+        previousLowPower !== profile.lowPower
+      ) {
+        clouds = createClouds(profile.compact, profile.lowPower);
+        birds = createBirds(profile.compact);
+        grass = createGrassBlades(profile.compact);
+      }
 
-      dpr = Math.min(
-        baseDpr,
-        lowPower
-          ? 1
-          : compact
-            ? 1.25
-            : 1.5,
-      );
-
-      canvas.width = Math.max(
-        1,
-        Math.round(width * dpr),
-      );
-
-      canvas.height = Math.max(
-        1,
-        Math.round(height * dpr),
-      );
-
-      canvas.style.width =
-        `${width}px`;
-
-      canvas.style.height =
-        `${height}px`;
-
-      context.setTransform(
-        dpr,
-        0,
-        0,
-        dpr,
-        0,
-        0,
-      );
-
-      context.imageSmoothingEnabled =
-        true;
+      canvas.width = Math.max(1, Math.round(width * profile.dpr));
+      canvas.height = Math.max(1, Math.round(height * profile.dpr));
+      canvas.style.width = `${width}px`;
+      canvas.style.height = `${height}px`;
+      context.setTransform(profile.dpr, 0, 0, profile.dpr, 0, 0);
+      context.imageSmoothingEnabled = true;
 
       palette = readPalette();
-
-      layers = buildLayers(
-        width,
-        height,
-        dpr,
-        palette,
+      layers = buildLayers(width, height, profile.layerDpr, palette);
+      sprites = CLOUD_PATHS.map((_, index) =>
+        createCloudSprite(index, profile.dpr, palette),
       );
-
-      sprites =
-        CLOUD_PATHS.map(
-          (_, index) =>
-            makeCloudSprite(
-              index,
-              dpr,
-              palette,
-            ),
-        );
     };
 
-    const render = (
-      now: number,
-      updateMotion: boolean,
-    ) => {
+    const render = (now: number, animate: boolean) => {
       if (!layers) {
         return;
       }
 
-      const delta = clamp(
-        (now - lastFrame) / 1000,
-        0,
-        0.08,
-      );
-
+      const delta = clamp((now - lastFrame) / 1000, 0, 0.08);
       lastFrame = now;
 
-      if (reducedMotion) {
-        currentScroll =
-          targetScroll;
-      } else {
-        currentScroll = lerp(
-          currentScroll,
-          targetScroll,
-          1 -
-            Math.exp(
-              -delta * 4.6,
-            ),
-        );
-      }
-
-      const descent =
-        smoothstep(
-          0.02,
-          1,
-          currentScroll,
-        );
+      currentScroll = profile.reducedMotion
+        ? targetScroll
+        : lerp(
+            currentScroll,
+            targetScroll,
+            1 - Math.exp(-delta * 4.8),
+          );
 
       const time = now / 1000;
+      const descent = smoothstep(0.02, 1, currentScroll);
+      const landReveal = smoothstep(0.08, 0.54, descent);
+      const groundReveal = smoothstep(0.25, 0.8, descent);
+      const foregroundReveal = smoothstep(0.5, 1, descent);
+      const landOffset =
+        (1 - landReveal) * height * 0.16 - descent * height * 0.055;
+      const groundOffset =
+        (1 - groundReveal) * height * 0.28 - descent * height * 0.11;
+      const foregroundOffset =
+        (1 - foregroundReveal) * height * 0.36 - descent * height * 0.16;
 
-      context.setTransform(
-        dpr,
-        0,
-        0,
-        dpr,
-        0,
-        0,
-      );
-
-      context.clearRect(
-        0,
-        0,
-        width,
-        height,
-      );
-
-      drawLayer(
-        context,
-        layers.sky,
-        width,
-        height,
-        0,
-      );
+      context.setTransform(profile.dpr, 0, 0, profile.dpr, 0, 0);
+      drawLayer(context, layers.sky, width, height, 0);
 
       drawCloudBand(
         context,
@@ -1822,7 +1117,7 @@ export default function SkyCanvas() {
         time,
         currentScroll,
         delta,
-        updateMotion,
+        animate,
       );
 
       drawLayer(
@@ -1830,9 +1125,8 @@ export default function SkyCanvas() {
         layers.mountains,
         width,
         height,
-        -descent *
-          height *
-          0.045,
+        -descent * height * 0.035,
+        0.9,
       );
 
       drawCloudBand(
@@ -1845,7 +1139,7 @@ export default function SkyCanvas() {
         time,
         currentScroll,
         delta,
-        updateMotion,
+        animate,
       );
 
       drawBirds(
@@ -1856,17 +1150,16 @@ export default function SkyCanvas() {
         time,
         delta,
         palette,
-        updateMotion,
+        animate,
       );
 
       drawLayer(
         context,
-        layers.hills,
+        layers.land,
         width,
         height,
-        -descent *
-          height *
-          0.105,
+        landOffset,
+        landReveal,
       );
 
       drawCloudBand(
@@ -1879,27 +1172,16 @@ export default function SkyCanvas() {
         time,
         currentScroll,
         delta,
-        updateMotion,
+        animate,
       );
 
       drawLayer(
         context,
-        layers.village,
+        layers.ground,
         width,
         height,
-        -descent *
-          height *
-          0.16,
-      );
-
-      drawLayer(
-        context,
-        layers.fields,
-        width,
-        height,
-        -descent *
-          height *
-          0.245,
+        groundOffset,
+        groundReveal,
       );
 
       drawLayer(
@@ -1907,63 +1189,54 @@ export default function SkyCanvas() {
         layers.foreground,
         width,
         height,
-        -descent *
-          height *
-          0.39,
+        foregroundOffset,
+        foregroundReveal,
       );
 
-      drawMovingGrass(
+      drawGrass(
         context,
+        grass,
         width,
         height,
         time,
-        descent,
+        foregroundOffset,
+        foregroundReveal,
         palette,
-        updateMotion,
+        animate,
       );
     };
 
+    const requestStaticRender = () => {
+      if (!profile.reducedMotion) {
+        return;
+      }
+
+      if (animationFrame) {
+        cancelAnimationFrame(animationFrame);
+      }
+
+      animationFrame = requestAnimationFrame((now) => {
+        animationFrame = 0;
+        render(now, false);
+      });
+    };
+
     const loop = (now: number) => {
-      frameId = 0;
+      animationFrame = 0;
 
       if (!running) {
         return;
       }
 
-      if (
-        now - lastPaint >=
-        frameInterval
-      ) {
-        lastPaint = now;
+      const interval = profile.fps > 0 ? 1000 / profile.fps : 0;
 
+      if (now - lastPaint >= interval) {
+        lastPaint = now;
         render(now, true);
       }
 
-      frameId =
-        requestAnimationFrame(loop);
+      animationFrame = requestAnimationFrame(loop);
     };
-
-    const requestStaticRender =
-      () => {
-        if (!reducedMotion) {
-          return;
-        }
-
-        if (frameId) {
-          cancelAnimationFrame(
-            frameId,
-          );
-        }
-
-        frameId =
-          requestAnimationFrame(
-            (now) => {
-              frameId = 0;
-
-              render(now, false);
-            },
-          );
-      };
 
     const handleScroll = () => {
       readScroll();
@@ -1972,133 +1245,77 @@ export default function SkyCanvas() {
 
     const handleResize = () => {
       if (resizeFrame) {
-        cancelAnimationFrame(
-          resizeFrame,
-        );
+        cancelAnimationFrame(resizeFrame);
       }
 
-      resizeFrame =
-        requestAnimationFrame(
-          () => {
-            resizeFrame = 0;
-
-            resize();
-            readScroll();
-
-            render(
-              performance.now(),
-              false,
-            );
-          },
-        );
+      resizeFrame = requestAnimationFrame(() => {
+        resizeFrame = 0;
+        rebuild();
+        readScroll();
+        currentScroll = targetScroll;
+        render(performance.now(), false);
+      });
     };
 
     const handleVisibility = () => {
-      running =
-        !document.hidden;
+      running = !document.hidden;
 
       if (!running) {
-        if (frameId) {
-          cancelAnimationFrame(
-            frameId,
-          );
+        if (animationFrame) {
+          cancelAnimationFrame(animationFrame);
         }
 
-        frameId = 0;
+        animationFrame = 0;
         return;
       }
 
-      lastFrame =
-        performance.now();
-
+      lastFrame = performance.now();
       lastPaint = 0;
 
-      if (reducedMotion) {
+      if (profile.reducedMotion) {
         requestStaticRender();
-      } else if (!frameId) {
-        frameId =
-          requestAnimationFrame(
-            loop,
-          );
+      } else if (!animationFrame) {
+        animationFrame = requestAnimationFrame(loop);
       }
     };
 
-    resize();
+    rebuild();
     readScroll();
+    currentScroll = targetScroll;
+    render(performance.now(), false);
 
-    currentScroll =
-      targetScroll;
-
-    render(
-      performance.now(),
-      false,
-    );
-
-    if (
-      !reducedMotion &&
-      running
-    ) {
-      frameId =
-        requestAnimationFrame(loop);
+    if (!profile.reducedMotion && running) {
+      animationFrame = requestAnimationFrame(loop);
     }
 
-    window.addEventListener(
-      "scroll",
-      handleScroll,
-      { passive: true },
-    );
-
-    window.addEventListener(
-      "resize",
-      handleResize,
-      { passive: true },
-    );
-
-    document.addEventListener(
-      "visibilitychange",
-      handleVisibility,
-    );
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    window.addEventListener("resize", handleResize, { passive: true });
+    window.visualViewport?.addEventListener("resize", handleResize, {
+      passive: true,
+    });
+    document.addEventListener("visibilitychange", handleVisibility);
 
     return () => {
-      if (frameId) {
-        cancelAnimationFrame(
-          frameId,
-        );
+      if (animationFrame) {
+        cancelAnimationFrame(animationFrame);
       }
 
       if (resizeFrame) {
-        cancelAnimationFrame(
-          resizeFrame,
-        );
+        cancelAnimationFrame(resizeFrame);
       }
 
-      window.removeEventListener(
-        "scroll",
-        handleScroll,
-      );
+      window.removeEventListener("scroll", handleScroll);
+      window.removeEventListener("resize", handleResize);
+      window.visualViewport?.removeEventListener("resize", handleResize);
+      document.removeEventListener("visibilitychange", handleVisibility);
 
-      window.removeEventListener(
-        "resize",
-        handleResize,
-      );
-
-      document.removeEventListener(
-        "visibilitychange",
-        handleVisibility,
-      );
-
+      sprites = [];
       clouds = [];
       birds = [];
-      sprites = [];
+      grass = [];
       layers = null;
     };
   }, []);
 
-  return (
-    <canvas
-      ref={canvasRef}
-      className={styles.sky}
-      aria-hidden="true"
-    />
-  );
+  return <canvas ref={canvasRef} className={styles.sky} aria-hidden="true" />;
 }

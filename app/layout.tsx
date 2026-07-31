@@ -4,6 +4,7 @@ import "./globals.css";
 import CloudIntro from "@/components/intro/CloudIntro";
 import SkyCanvas from "@/components/sky/SkyCanvas";
 import GopherCompanion from "@/components/gopher/GopherCompanion";
+import Sky from "@/components/sky/Sky";
 
 const fraunces = Fraunces({
   subsets: ["latin"],
@@ -45,6 +46,7 @@ export default function RootLayout({
          * Mark JS as available before first paint. Reveal's hidden-start state
          * is gated on .js so no-JS / headless renders always ship visible.
          */}
+         <Sky />
         <script
           dangerouslySetInnerHTML={{
             __html: `document.documentElement.classList.add('js')`,
