@@ -21,8 +21,6 @@ export const metadata: Metadata = {
 export default function ArticlesPage() {
   return (
     <>
-      <SkyCanvas />
-      <Nav />
       <main id="main" className={styles.wrap}>
         <Reveal className={styles.card} y={16}>
           <div className={styles.gopherSeat}>
@@ -41,7 +39,6 @@ export default function ArticlesPage() {
           </Link>
         </Reveal>
       </main>
-      <Footer />
     </>
   );
 }

@@ -45,8 +45,6 @@ const CHANNELS = [
 export default function ContactPage() {
   return (
     <>
-      <SkyCanvas />
-      <Nav />
       <main id="main" className={styles.wrap}>
         <Reveal className={styles.head} y={16}>
           <p className={styles.altitude}>Altitude · the peak</p>
@@ -106,7 +104,6 @@ export default function ContactPage() {
           </div>
         </div>
       </main>
-      <Footer />
     </>
   );
 }
