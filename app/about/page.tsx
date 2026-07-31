@@ -9,8 +9,6 @@ export const metadata: Metadata = {
     "The climb so far: education, organisations, and how I work as a Go developer.",
 };
 
-// Placeholder journey. Education + organisation experience share one upward
-// timeline (oldest at the base, newest near the peak). Swap for real entries.
 type Entry = {
   when: string;
   title: string;
